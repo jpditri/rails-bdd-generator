@@ -1,0 +1,17 @@
+#!/bin/bash
+# Pre-push hook for rails-bdd-generator
+
+echo "Running pre-push checks..."
+
+# Run tests if they exist
+if [ -f "Gemfile" ]; then
+  echo "Checking bundle..."
+  if ! bundle check > /dev/null 2>&1; then
+    echo "❌ Bundle is not up to date!"
+    echo "Run 'bundle install' and commit the changes."
+    exit 1
+  fi
+fi
+
+echo "✅ Pre-push checks passed!"
+exit 0

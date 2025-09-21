@@ -1,0 +1,17 @@
+#!/bin/bash
+# Pre-commit hook for rails-bdd-generator
+# Based on heretical-web-app hooks
+
+echo "🔍 Checking for debugging statements..."
+
+# Check for debugging statements
+debugging_statements=$(git diff --cached --name-only --diff-filter=ACM | grep -v '.githooks' | xargs -I {} grep -l 'binding\.pry\|debugger\|console\.log.*DEBUG\|puts.*DEBUG' {} 2>/dev/null || true)
+
+if [ -n "$debugging_statements" ]; then
+  echo "❌ Debugging statements found in:"
+  echo "$debugging_statements"
+  echo "Please remove debugging statements before committing."
+  exit 1
+fi
+
+echo "✅ Pre-commit checks passed"

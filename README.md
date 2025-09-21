@@ -2,8 +2,6 @@
 
 An agentic Ruby gem that generates complete Rails applications using Behavior-Driven Development (BDD) and Test-Driven Development (TDD) principles, with beautiful theme-aware UX out of the box.
 
-![Rails BDD Generator Demo](demo/screenshots/hero.png)
-
 ## Features
 
 - 🤖 **AI-Powered Design**: Uses Claude AI to intelligently design your Rails application
@@ -184,6 +182,8 @@ Check out the [demo folder](demo/) to see a complete example of what gets genera
 - Complete CRUD for books, orders, and reviews
 - Smart inventory tracking with stock status badges
 - Comprehensive test coverage with factory traits
+
+See [UI Examples](demo/screenshots/README.md) for detailed descriptions of the generated user interface.
 
 ## What Gets Generated
 

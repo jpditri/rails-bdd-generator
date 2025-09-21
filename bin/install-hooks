@@ -1,0 +1,14 @@
+#!/bin/bash
+# Install git hooks for rails-bdd-generator
+
+echo "Installing git hooks..."
+
+# Copy hooks to .git/hooks
+cp .githooks/* .git/hooks/
+chmod +x .git/hooks/*
+
+echo "✅ Git hooks installed successfully!"
+echo ""
+echo "Hooks installed:"
+echo "  • pre-commit: Checks for debugging statements"
+echo "  • pre-push: Verifies bundle is up to date"
