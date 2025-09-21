@@ -3,6 +3,7 @@ require 'yaml'
 require 'fileutils'
 require 'pathname'
 require 'active_support/core_ext/string'
+require_relative 'llm_designer'
 
 module RailsBddGenerator
   class Generator
@@ -15,6 +16,12 @@ module RailsBddGenerator
       @features = []
       @migrations = []
       @tests = []
+      @llm_designer = nil
+
+      # Initialize LLM designer if API key is available
+      if ENV['ANTHROPIC_API_KEY']
+        @llm_designer = LLMDesigner.new
+      end
     end
 
     def generate!
@@ -69,6 +76,26 @@ module RailsBddGenerator
 
     def analyze_specification
       puts "\n📊 Analyzing specification..."
+
+      if @llm_designer && @specification['description']
+        puts "  🤖 Using AI to design application architecture..."
+
+        begin
+          # Use LLM to design the application
+          llm_design = @llm_designer.design_application(@specification['description'])
+
+          # Merge LLM design with any existing specification
+          @specification = @specification.merge(llm_design) do |key, old_val, new_val|
+            # Keep user-provided values, use LLM for missing ones
+            old_val.nil? || (old_val.is_a?(Array) && old_val.empty?) ? new_val : old_val
+          end
+
+          puts "  ✨ AI-powered design complete!"
+        rescue => e
+          puts "  ⚠️ LLM design failed: #{e.message}"
+          puts "  📝 Falling back to pattern-based extraction..."
+        end
+      end
 
       extract_entities
       extract_relationships
@@ -627,11 +654,52 @@ module RailsBddGenerator
     def generate_cucumber_features
       puts "\n🥒 Generating Cucumber features..."
 
+      if @llm_designer
+        puts "  🤖 Using AI to generate comprehensive BDD features..."
+
+        begin
+          # Use LLM to generate Cucumber features
+          llm_features = @llm_designer.generate_cucumber_features(@entities, @relationships, @business_rules)
+
+          if llm_features && llm_features['features']
+            llm_features['features'].each do |feature|
+              save_llm_generated_feature(feature)
+            end
+            puts "  ✨ AI-generated #{llm_features['features'].count} comprehensive features!"
+          end
+        rescue => e
+          puts "  ⚠️ LLM feature generation failed: #{e.message}"
+          puts "  📝 Falling back to template-based generation..."
+          generate_template_based_features
+        end
+      else
+        generate_template_based_features
+      end
+
+      puts "  ✓ Generated #{@features.count} features"
+    end
+
+    def generate_template_based_features
       @entities.each do |entity|
         generate_feature(entity)
       end
+    end
 
-      puts "  ✓ Generated #{@entities.count} features"
+    def save_llm_generated_feature(feature)
+      feature_name = feature['name'].downcase.gsub(/\s+/, '_')
+      feature_content = feature['content']
+
+      # Save feature file
+      feature_file = @output_path.join("features/#{feature_name}.feature")
+      File.write(feature_file, feature_content)
+
+      # Save step definitions if provided
+      if feature['step_definitions']
+        step_file = @output_path.join("features/step_definitions/#{feature_name}_steps.rb")
+        File.write(step_file, feature['step_definitions'])
+      end
+
+      @features << feature_file
     end
 
     def generate_feature(entity)

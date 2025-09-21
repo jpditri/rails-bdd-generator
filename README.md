@@ -4,10 +4,11 @@ An agentic Ruby gem that generates complete Rails applications using Behavior-Dr
 
 ## Features
 
-- 🚀 **Agentic Generation**: Intelligently builds complete Rails 8 apps from simple descriptions
-- 🧪 **Full BDD/TDD Coverage**: Cucumber features and RSpec tests for everything
+- 🤖 **AI-Powered Design**: Uses Claude AI to intelligently design your Rails application
+- 🚀 **Agentic Generation**: Builds complete Rails 8 apps from simple descriptions
+- 🧪 **Full BDD/TDD Coverage**: AI-generated Cucumber features and RSpec tests
 - 🔐 **Rails 8 Authentication**: Uses Rails 8's built-in authentication (no Devise needed!)
-- 📊 **Smart Database Design**: Automatic migrations and relationships
+- 📊 **Smart Database Design**: AI-designed entities, attributes, and relationships
 - 🌐 **API First**: RESTful JSON API with authentication
 - 🔍 **Search & Filter**: Built-in search, pagination, and filtering
 - ✅ **Production Ready**: Validation, error handling, and security best practices
@@ -26,16 +27,38 @@ Or install directly:
 gem install rails_bdd_generator
 ```
 
+## Setup
+
+### API Key Configuration
+
+To enable AI-powered generation, set your Anthropic API key:
+
+```bash
+export ANTHROPIC_API_KEY="your-api-key-here"
+```
+
+Without an API key, the generator will fall back to pattern-based extraction.
+
 ## Usage
 
-### From Description
+### From Description (AI-Powered)
 
-Generate a complete Rails app from a simple description:
+When you provide a description, the AI will:
+1. Design the complete application architecture
+2. Identify all necessary entities and attributes
+3. Define relationships and business rules
+4. Generate comprehensive BDD features
+5. Create production-ready code
 
 ```ruby
 require 'rails_bdd_generator'
 
-RailsBddGenerator.generate("Trading card collection manager with deck building")
+# AI will design a complete card game platform with:
+# - Cards, decks, collections, trades, tournaments
+# - User authentication and authorization
+# - API endpoints, background jobs
+# - Complete test coverage
+RailsBddGenerator.generate("Trading card collection manager with deck building and tournament support")
 ```
 
 ### From Specification
