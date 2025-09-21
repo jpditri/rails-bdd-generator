@@ -1,0 +1,43 @@
+#!/usr/bin/env ruby
+
+require 'optparse'
+require_relative '../lib/rails_bdd_generator'
+
+options = {}
+OptionParser.new do |opts|
+  opts.banner = "Usage: rails-bdd-generator [options]"
+
+  opts.on("-s", "--spec SPEC", "Specification (JSON/YAML file or string description)") do |s|
+    options[:spec] = s
+  end
+
+  opts.on("-o", "--output PATH", "Output directory for Rails app") do |o|
+    options[:output] = o
+  end
+
+  opts.on("-v", "--version", "Show version") do
+    puts "Rails BDD Generator v#{RailsBddGenerator::VERSION}"
+    exit
+  end
+
+  opts.on("-h", "--help", "Show this help") do
+    puts opts
+    puts "\nExamples:"
+    puts "  rails-bdd-generator -s 'Trading card collection manager' -o ./card_vault"
+    puts "  rails-bdd-generator -s collectible_cards.json -o ./output"
+    exit
+  end
+end.parse!
+
+if options[:spec]
+  begin
+    RailsBddGenerator.generate(options[:spec], output_path: options[:output])
+  rescue => e
+    puts "❌ Error: #{e.message}"
+    exit 1
+  end
+else
+  puts "Rails BDD Generator v#{RailsBddGenerator::VERSION}"
+  puts "Use -h for help"
+  exit 1
+end
