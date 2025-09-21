@@ -1,0 +1,208 @@
+{
+  "name": "rails-bdd-generator",
+  "version": "1.0.0",
+  "description": "Generate complete Rails applications with BDD/TDD approach using AI-powered design",
+  "author": "BDD Generator Team",
+  "license": "MIT",
+  "tools": [
+    {
+      "name": "generate_rails_app",
+      "description": "Generate a complete Rails 8 application with BDD/TDD tests from a description or specification",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "description": {
+            "type": "string",
+            "description": "Natural language description of the Rails application to generate (e.g., 'Trading card collection manager with deck building')"
+          },
+          "specification": {
+            "type": "object",
+            "description": "Detailed specification with entities, relationships, and business rules",
+            "properties": {
+              "name": {
+                "type": "string",
+                "description": "Application name"
+              },
+              "entities": {
+                "type": "array",
+                "description": "List of entities with their attributes",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "name": {
+                      "type": "string"
+                    },
+                    "attributes": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "string",
+                        "enum": ["string", "text", "integer", "float", "boolean", "datetime", "date", "time", "decimal"]
+                      }
+                    }
+                  },
+                  "required": ["name", "attributes"]
+                }
+              },
+              "relationships": {
+                "type": "array",
+                "description": "Entity relationships",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "from": {
+                      "type": "string"
+                    },
+                    "to": {
+                      "type": "string"
+                    },
+                    "type": {
+                      "type": "string",
+                      "enum": ["has_many", "belongs_to", "has_one", "has_and_belongs_to_many"]
+                    }
+                  },
+                  "required": ["from", "to", "type"]
+                }
+              },
+              "business_rules": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "output_path": {
+            "type": "string",
+            "description": "Path where the Rails application should be generated",
+            "default": "./generated_app"
+          },
+          "use_ai": {
+            "type": "boolean",
+            "description": "Use Claude AI to design the application (requires ANTHROPIC_API_KEY)",
+            "default": true
+          }
+        },
+        "oneOf": [
+          {
+            "required": ["description"]
+          },
+          {
+            "required": ["specification"]
+          }
+        ]
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean"
+          },
+          "app_path": {
+            "type": "string"
+          },
+          "entities_created": {
+            "type": "integer"
+          },
+          "features_generated": {
+            "type": "integer"
+          },
+          "next_steps": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "error": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    {
+      "name": "design_rails_app",
+      "description": "Use AI to design a Rails application architecture from a description (doesn't generate code)",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "description": {
+            "type": "string",
+            "description": "Natural language description of the Rails application"
+          }
+        },
+        "required": ["description"]
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "entities": {
+            "type": "array"
+          },
+          "relationships": {
+            "type": "array"
+          },
+          "business_rules": {
+            "type": "array"
+          },
+          "features": {
+            "type": "array"
+          },
+          "api_endpoints": {
+            "type": "array"
+          },
+          "error": {
+            "type": "string"
+          }
+        }
+      }
+    }
+  ],
+  "requirements": {
+    "ruby": ">=3.3.0",
+    "rails": "~>8.0",
+    "environment_variables": [
+      {
+        "name": "ANTHROPIC_API_KEY",
+        "description": "API key for Claude AI integration (optional, enables AI-powered design)",
+        "required": false
+      }
+    ]
+  },
+  "examples": [
+    {
+      "tool": "generate_rails_app",
+      "input": {
+        "description": "Trading card collection manager with deck building and tournament support",
+        "output_path": "./card_vault"
+      }
+    },
+    {
+      "tool": "generate_rails_app",
+      "input": {
+        "specification": {
+          "name": "CardVault",
+          "entities": [
+            {
+              "name": "card",
+              "attributes": {
+                "name": "string",
+                "mana_cost": "integer",
+                "attack": "integer",
+                "defense": "integer"
+              }
+            }
+          ],
+          "relationships": [
+            {
+              "from": "user",
+              "to": "card",
+              "type": "has_many"
+            }
+          ]
+        }
+      }
+    }
+  ]
+}
