@@ -1,30 +1,57 @@
-<h1>Reviews</h1>
+<div class="container">
+  <div class="row">
+    <div class="col-12">
+      <div class="card">
+        <div class="card-header">
+          <h1 style="margin: 0;">Reviews</h1>
+        </div>
+        <div class="card-body">
+          <div style="margin-bottom: 1rem; display: flex; justify-content: space-between; align-items: center;">
+            <%= render 'shared/search' %>
+            <%= link_to 'New Review', new_review_path, class: 'btn btn-primary' %>
+          </div>
 
-<%= link_to 'New Review', new_review_path, class: 'btn btn-primary' %>
+          <div class="table-responsive">
+            <table class="table">
+              <thead>
+                <tr>
+                  <th>Rating</th>
+                          <th>Title</th>
+                          <th>Content</th>
+                          <th>Verified purchase</th>
+                  <th style="text-align: right;">Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                <% @reviews.each do |review| %>
+                  <tr class="review-row">
+                    <td><%= truncate(review.rating.to_s, length: 50) %></td>
+                            <td><%= truncate(review.title.to_s, length: 50) %></td>
+                            <td><%= truncate(review.content.to_s, length: 50) %></td>
+                            <td><%= truncate(review.verified_purchase.to_s, length: 50) %></td>
+                    <td style="text-align: right;">
+                      <%= link_to 'View', review, class: 'btn btn-sm btn-outline' %>
+                      <%= link_to 'Edit', edit_review_path(review), class: 'btn btn-sm btn-secondary' %>
+                      <%= link_to 'Delete', review, method: :delete,
+                          data: { confirm: 'Are you sure?' },
+                          class: 'btn btn-sm btn-danger' %>
+                    </td>
+                  </tr>
+                <% end %>
+                <% if @reviews.empty? %>
+                  <tr>
+                    <td colspan="5" style="text-align: center; padding: 2rem; color: var(--muted);">
+                      No reviews found. <%= link_to 'Create one now', new_review_path %>.
+                    </td>
+                  </tr>
+                <% end %>
+              </tbody>
+            </table>
+          </div>
 
-<table class="table">
-  <thead>
-    <tr>
-      <th>Rating</th>
-      <th>Title</th>
-      <th>Content</th>
-      <th>Actions</th>
-    </tr>
-  </thead>
-  <tbody>
-    <% @reviews.each do |review| %>
-      <tr>
-        <td><%= review.rating %></td>
-        <td><%= review.title %></td>
-        <td><%= review.content %></td>
-        <td>
-          <%= link_to 'Show', review %>
-          <%= link_to 'Edit', edit_review_path(review) %>
-          <%= link_to 'Delete', review, method: :delete, data: { confirm: 'Are you sure?' } %>
-        </td>
-      </tr>
-    <% end %>
-  </tbody>
-</table>
-
-<%= paginate @reviews %>
+          <%= paginate @reviews %>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

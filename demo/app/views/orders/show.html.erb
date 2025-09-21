@@ -1,12 +1,53 @@
-<h1>Order</h1>
+<div class="container">
+  <div class="card">
+    <div class="card-header">
+      <h1 style="margin: 0;">Order Details</h1>
+    </div>
+    <div class="card-body">
+      <div class="row">
+        <div class="col-md-6" style="margin-bottom: 1rem;">
+  <strong>Order number:</strong>
+      <%= @order.order_number %>    </div>
+                <div class="col-md-6" style="margin-bottom: 1rem;">
+  <strong>Total amount:</strong>
+      <span class="price"><%= format_currency(@order.total_amount) %></span>    </div>
+                <div class="col-md-6" style="margin-bottom: 1rem;">
+  <strong>Status:</strong>
+      <%= @order.status %>    </div>
+                <div class="col-12" style="margin-bottom: 1rem;">
+  <strong>Shipping address:</strong>
+  <div style="margin-top: 0.5rem;">
+    <%= simple_format(@order.shipping_address) %>
+  </div>
+    </div>
+                <div class="col-md-6" style="margin-bottom: 1rem;">
+  <strong>Payment method:</strong>
+      <%= @order.payment_method %>    </div>
+                <div class="col-12" style="margin-bottom: 1rem;">
+  <strong>Notes:</strong>
+  <div style="margin-top: 0.5rem;">
+    <%= simple_format(@order.notes) %>
+  </div>
+    </div>
+                <div class="col-md-6" style="margin-bottom: 1rem;">
+  <strong>Shipped at:</strong>
+      <%= format_date(@order.shipped_at) %>    </div>
+      </div>
+    </div>
+    <div class="card-footer">
+      <%= link_to 'Edit', edit_order_path(@order), class: 'btn btn-primary' %>
+      <%= link_to 'Delete', order_path(@order), method: :delete,
+          data: { confirm: 'Are you sure?' }, class: 'btn btn-danger' %>
+      <%= link_to 'Back to List', orders_path, class: 'btn btn-secondary' %>
+    </div>
+  </div>
 
-<p><strong>Order number:</strong> <%= @order.order_number %></p>
-<p><strong>Total amount:</strong> <%= @order.total_amount %></p>
-<p><strong>Status:</strong> <%= @order.status %></p>
-<p><strong>Shipping address:</strong> <%= @order.shipping_address %></p>
-<p><strong>Payment method:</strong> <%= @order.payment_method %></p>
-<p><strong>Notes:</strong> <%= @order.notes %></p>
-<p><strong>Shipped at:</strong> <%= @order.shipped_at %></p>
-
-<%= link_to 'Edit', edit_order_path(@order), class: 'btn btn-primary' %>
-<%= link_to 'Back', orders_path, class: 'btn btn-secondary' %>
+  <% if @order.respond_to?(:reviews) && @order.reviews.any? %>
+    <div class="card" style="margin-top: 1rem;">
+      <div class="card-header">Reviews</div>
+      <div class="card-body">
+        <%= render @order.reviews %>
+      </div>
+    </div>
+  <% end %>
+</div>
