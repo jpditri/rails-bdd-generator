@@ -1,0 +1,8 @@
+<h1>Order_item</h1>
+
+<p><strong>Quantity:</strong> <%= @order_item.quantity %></p>
+<p><strong>Unit price:</strong> <%= @order_item.unit_price %></p>
+<p><strong>Subtotal:</strong> <%= @order_item.subtotal %></p>
+
+<%= link_to 'Edit', edit_order_item_path(@order_item), class: 'btn btn-primary' %>
+<%= link_to 'Back', order_items_path, class: 'btn btn-secondary' %>

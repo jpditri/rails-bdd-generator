@@ -1,0 +1,32 @@
+<%= form_with(model: review, local: true) do |form| %>
+  <% if review.errors.any? %>
+    <div class="alert alert-danger">
+      <ul>
+        <% review.errors.full_messages.each do |message| %>
+          <li><%= message %></li>
+        <% end %>
+      </ul>
+    </div>
+  <% end %>
+
+  <div class="field">
+  <%= form.label :rating %>
+  <%= form.number_field :rating, class: 'form-control' %>
+</div>
+  <div class="field">
+  <%= form.label :title %>
+  <%= form.text_field :title, class: 'form-control' %>
+</div>
+  <div class="field">
+  <%= form.label :content %>
+  <%= form.text_area :content, class: 'form-control' %>
+</div>
+  <div class="field">
+  <%= form.label :verified_purchase %>
+  <%= form.check_box :verified_purchase, class: 'form-control' %>
+</div>
+
+  <div class="actions">
+    <%= form.submit class: 'btn btn-primary' %>
+  </div>
+<% end %>

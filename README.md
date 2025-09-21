@@ -1,11 +1,14 @@
 # Rails BDD Generator
 
-An agentic Ruby gem that generates complete Rails applications using Behavior-Driven Development (BDD) and Test-Driven Development (TDD) principles.
+An agentic Ruby gem that generates complete Rails applications using Behavior-Driven Development (BDD) and Test-Driven Development (TDD) principles, with beautiful theme-aware UX out of the box.
+
+![Rails BDD Generator Demo](demo/screenshots/hero.png)
 
 ## Features
 
 - 🤖 **AI-Powered Design**: Uses Claude AI to intelligently design your Rails application
 - 🚀 **Agentic Generation**: Builds complete Rails 8 apps from simple descriptions
+- 🎨 **Theme-Aware UX**: Automatically detects domain and applies beautiful, appropriate styling
 - 🧪 **Enterprise Testing**: Comprehensive test suite with factories, traits, and resilience patterns
 - 🔐 **Rails 8 Authentication**: Uses Rails 8's built-in authentication (no Devise needed!)
 - 📊 **Smart Database Design**: AI-designed entities, attributes, and relationships
@@ -14,6 +17,7 @@ An agentic Ruby gem that generates complete Rails applications using Behavior-Dr
 - ✅ **Production Ready**: Validation, error handling, and security best practices
 - 🎯 **Test Coverage**: Model specs, feature specs, request specs, and performance tests
 - 🏭 **Smart Factories**: FactoryBot with contextual traits for realistic test data
+- 💅 **Beautiful UI**: Cards, responsive tables, badges, and modern components out of the box
 
 ## Installation
 
@@ -170,15 +174,25 @@ rails db:create db:migrate db:seed
 rails server
 ```
 
+## Demo - BookStore Application
+
+Check out the [demo folder](demo/) to see a complete example of what gets generated, including a bookstore application with:
+- Literary-themed UI with warm book-like colors
+- Complete CRUD for books, orders, and reviews
+- Smart inventory tracking with stock status badges
+- Comprehensive test coverage with factory traits
+
 ## What Gets Generated
 
 ### Complete Rails Application
 - Models with validations and associations
 - RESTful controllers with authentication
-- Views with forms and tables
+- **Beautiful themed views** with cards, responsive tables, and modern UI
 - API endpoints with JSON serialization
 - Database migrations
 - Seed data
+- **Theme-aware styling** that adapts to your application domain
+- **Interactive JavaScript** for enhanced UX
 
 ### Enterprise Test Suite
 - **Model Specs**: Comprehensive testing with associations, validations, callbacks, and business logic

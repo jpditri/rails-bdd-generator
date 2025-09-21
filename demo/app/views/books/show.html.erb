@@ -1,0 +1,14 @@
+<h1>Book</h1>
+
+<p><strong>Title:</strong> <%= @book.title %></p>
+<p><strong>Author:</strong> <%= @book.author %></p>
+<p><strong>Isbn:</strong> <%= @book.isbn %></p>
+<p><strong>Description:</strong> <%= @book.description %></p>
+<p><strong>Price:</strong> <%= @book.price %></p>
+<p><strong>Stock quantity:</strong> <%= @book.stock_quantity %></p>
+<p><strong>Published at:</strong> <%= @book.published_at %></p>
+<p><strong>Category:</strong> <%= @book.category %></p>
+<p><strong>Active:</strong> <%= @book.active %></p>
+
+<%= link_to 'Edit', edit_book_path(@book), class: 'btn btn-primary' %>
+<%= link_to 'Back', books_path, class: 'btn btn-secondary' %>

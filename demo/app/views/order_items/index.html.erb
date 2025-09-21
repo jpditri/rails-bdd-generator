@@ -1,0 +1,30 @@
+<h1>Order_items</h1>
+
+<%= link_to 'New Order_item', new_order_item_path, class: 'btn btn-primary' %>
+
+<table class="table">
+  <thead>
+    <tr>
+      <th>Quantity</th>
+      <th>Unit price</th>
+      <th>Subtotal</th>
+      <th>Actions</th>
+    </tr>
+  </thead>
+  <tbody>
+    <% @order_items.each do |order_item| %>
+      <tr>
+        <td><%= order_item.quantity %></td>
+        <td><%= order_item.unit_price %></td>
+        <td><%= order_item.subtotal %></td>
+        <td>
+          <%= link_to 'Show', order_item %>
+          <%= link_to 'Edit', edit_order_item_path(order_item) %>
+          <%= link_to 'Delete', order_item, method: :delete, data: { confirm: 'Are you sure?' } %>
+        </td>
+      </tr>
+    <% end %>
+  </tbody>
+</table>
+
+<%= paginate @order_items %>

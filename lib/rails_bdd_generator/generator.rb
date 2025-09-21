@@ -6,6 +6,7 @@ require 'active_support/core_ext/string'
 require_relative 'llm_designer'
 require_relative 'test_generator'
 require_relative 'test_helpers'
+require_relative 'ux_enhancer'
 
 module RailsBddGenerator
   class Generator
@@ -43,6 +44,7 @@ module RailsBddGenerator
       generate_cucumber_features
       generate_rspec_tests
       generate_api_layer
+      enhance_ux
       finalize_application
 
       puts "\n✅ Rails application generated successfully!"
@@ -494,32 +496,57 @@ module RailsBddGenerator
 
     def index_view_template(entity)
       <<~ERB
-        <h1>#{entity[:name].capitalize.pluralize}</h1>
+        <div class="container">
+          <div class="row">
+            <div class="col-12">
+              <div class="card">
+                <div class="card-header">
+                  <h1 style="margin: 0;">#{entity[:name].capitalize.pluralize}</h1>
+                </div>
+                <div class="card-body">
+                  <div style="margin-bottom: 1rem; display: flex; justify-content: space-between; align-items: center;">
+                    <%= render 'shared/search' %>
+                    <%= link_to 'New #{entity[:name].capitalize}', new_#{entity[:name]}_path, class: 'btn btn-primary' %>
+                  </div>
 
-        <%= link_to 'New #{entity[:name].capitalize}', new_#{entity[:name]}_path, class: 'btn btn-primary' %>
+                  <div class="table-responsive">
+                    <table class="table">
+                      <thead>
+                        <tr>
+                          #{entity[:attributes].keys.take(4).map { |a| "<th>#{a.to_s.humanize}</th>" }.join("\n                          ")}
+                          <th style="text-align: right;">Actions</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        <% @#{entity[:name].pluralize}.each do |#{entity[:name]}| %>
+                          <tr class="#{entity[:name]}-row">
+                            #{entity[:attributes].keys.take(4).map { |a| generate_table_cell(entity, a) }.join("\n                            ")}
+                            <td style="text-align: right;">
+                              <%= link_to 'View', #{entity[:name]}, class: 'btn btn-sm btn-outline' %>
+                              <%= link_to 'Edit', edit_#{entity[:name]}_path(#{entity[:name]}), class: 'btn btn-sm btn-secondary' %>
+                              <%= link_to 'Delete', #{entity[:name]}, method: :delete,
+                                  data: { confirm: 'Are you sure?' },
+                                  class: 'btn btn-sm btn-danger' %>
+                            </td>
+                          </tr>
+                        <% end %>
+                        <% if @#{entity[:name].pluralize}.empty? %>
+                          <tr>
+                            <td colspan="5" style="text-align: center; padding: 2rem; color: var(--muted);">
+                              No #{entity[:name].pluralize} found. <%= link_to 'Create one now', new_#{entity[:name]}_path %>.
+                            </td>
+                          </tr>
+                        <% end %>
+                      </tbody>
+                    </table>
+                  </div>
 
-        <table class="table">
-          <thead>
-            <tr>
-              #{entity[:attributes].keys.take(3).map { |a| "<th>#{a.to_s.humanize}</th>" }.join("\n      ")}
-              <th>Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            <% @#{entity[:name].pluralize}.each do |#{entity[:name]}| %>
-              <tr>
-                #{entity[:attributes].keys.take(3).map { |a| "<td><%= #{entity[:name]}.#{a} %></td>" }.join("\n        ")}
-                <td>
-                  <%= link_to 'Show', #{entity[:name]} %>
-                  <%= link_to 'Edit', edit_#{entity[:name]}_path(#{entity[:name]}) %>
-                  <%= link_to 'Delete', #{entity[:name]}, method: :delete, data: { confirm: 'Are you sure?' } %>
-                </td>
-              </tr>
-            <% end %>
-          </tbody>
-        </table>
-
-        <%= paginate @#{entity[:name].pluralize} %>
+                  <%= paginate @#{entity[:name].pluralize} %>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
       ERB
     end
 
@@ -567,33 +594,67 @@ module RailsBddGenerator
 
     def show_view_template(entity)
       <<~ERB
-        <h1>#{entity[:name].capitalize}</h1>
+        <div class="container">
+          <div class="card">
+            <div class="card-header">
+              <h1 style="margin: 0;">#{entity[:name].capitalize} Details</h1>
+            </div>
+            <div class="card-body">
+              <div class="row">
+                #{entity[:attributes].map { |attr, type| generate_show_field(entity, attr, type) }.join("\n                ")}
+              </div>
+            </div>
+            <div class="card-footer">
+              <%= link_to 'Edit', edit_#{entity[:name]}_path(@#{entity[:name]}), class: 'btn btn-primary' %>
+              <%= link_to 'Delete', #{entity[:name]}_path(@#{entity[:name]}), method: :delete,
+                  data: { confirm: 'Are you sure?' }, class: 'btn btn-danger' %>
+              <%= link_to 'Back to List', #{entity[:name].pluralize}_path, class: 'btn btn-secondary' %>
+            </div>
+          </div>
 
-        #{entity[:attributes].map { |a, _| "<p><strong>#{a.to_s.humanize}:</strong> <%= @#{entity[:name]}.#{a} %></p>" }.join("\n")}
-
-        <%= link_to 'Edit', edit_#{entity[:name]}_path(@#{entity[:name]}), class: 'btn btn-primary' %>
-        <%= link_to 'Back', #{entity[:name].pluralize}_path, class: 'btn btn-secondary' %>
+          <% if @#{entity[:name]}.respond_to?(:reviews) && @#{entity[:name]}.reviews.any? %>
+            <div class="card" style="margin-top: 1rem;">
+              <div class="card-header">Reviews</div>
+              <div class="card-body">
+                <%= render @#{entity[:name]}.reviews %>
+              </div>
+            </div>
+          <% end %>
+        </div>
       ERB
     end
 
     def new_view_template(entity)
       <<~ERB
-        <h1>New #{entity[:name].capitalize}</h1>
-
-        <%= render 'form', #{entity[:name]}: @#{entity[:name]} %>
-
-        <%= link_to 'Back', #{entity[:name].pluralize}_path %>
+        <div class="container">
+          <div class="card">
+            <div class="card-header">
+              <h1 style="margin: 0;">New #{entity[:name].capitalize}</h1>
+            </div>
+            <div class="card-body">
+              <%= render 'form', #{entity[:name]}: @#{entity[:name]} %>
+            </div>
+          </div>
+        </div>
       ERB
     end
 
     def edit_view_template(entity)
       <<~ERB
-        <h1>Edit #{entity[:name].capitalize}</h1>
-
-        <%= render 'form', #{entity[:name]}: @#{entity[:name]} %>
-
-        <%= link_to 'Show', @#{entity[:name]} %> |
-        <%= link_to 'Back', #{entity[:name].pluralize}_path %>
+        <div class="container">
+          <div class="card">
+            <div class="card-header">
+              <h1 style="margin: 0;">Edit #{entity[:name].capitalize}</h1>
+            </div>
+            <div class="card-body">
+              <%= render 'form', #{entity[:name]}: @#{entity[:name]} %>
+            </div>
+            <div class="card-footer">
+              <%= link_to 'View', @#{entity[:name]}, class: 'btn btn-outline' %>
+              <%= link_to 'Back to List', #{entity[:name].pluralize}_path, class: 'btn btn-secondary' %>
+            </div>
+          </div>
+        </div>
       ERB
     end
 
@@ -949,6 +1010,78 @@ module RailsBddGenerator
       File.write(@output_path.join("app/serializers/#{entity[:name]}_serializer.rb"), serializer_content)
     end
 
+    def enhance_ux
+      puts "\n🎨 Enhancing user experience..."
+
+      # Initialize UX enhancer
+      ux_enhancer = UxEnhancer.new(
+        @specification['name'] || 'Rails App',
+        @specification['description'] || 'A Rails application',
+        @entities
+      )
+
+      # Generate UX enhancements
+      ux_assets = ux_enhancer.enhance!
+
+      # Write stylesheets
+      FileUtils.mkdir_p(@output_path.join('app/assets/stylesheets'))
+      ux_assets[:stylesheets].each do |filename, content|
+        File.write(@output_path.join("app/assets/stylesheets/#{filename}"), content)
+      end
+
+      # Write JavaScript
+      FileUtils.mkdir_p(@output_path.join('app/javascript'))
+      File.write(@output_path.join('app/javascript/application.js'), ux_assets[:javascript])
+
+      # Write layouts
+      FileUtils.mkdir_p(@output_path.join('app/views/layouts'))
+      ux_assets[:layouts].each do |filename, content|
+        File.write(@output_path.join("app/views/layouts/#{filename}"), content)
+      end
+
+      # Write shared components
+      FileUtils.mkdir_p(@output_path.join('app/views/shared'))
+      ux_assets[:components].each do |filename, content|
+        File.write(@output_path.join("app/views/shared/#{filename}"), content)
+      end
+
+      # Write asset pipeline config
+      FileUtils.mkdir_p(@output_path.join('app/assets/config'))
+      ux_assets[:assets].each do |filename, content|
+        File.write(@output_path.join("app/assets/config/#{filename}"), content)
+      end
+
+      # Update application helper with flash class method
+      helper_content = <<~RUBY
+        module ApplicationHelper
+          def flash_class(type)
+            case type.to_sym
+            when :notice, :success then 'success'
+            when :alert, :error then 'danger'
+            when :warning then 'warning'
+            else 'info'
+            end
+          end
+
+          def format_currency(amount)
+            number_to_currency(amount)
+          end
+
+          def format_date(date)
+            date.strftime("%B %d, %Y") if date
+          end
+        end
+      RUBY
+
+      FileUtils.mkdir_p(@output_path.join('app/helpers'))
+      File.write(@output_path.join('app/helpers/application_helper.rb'), helper_content)
+
+      puts "  ✓ UX enhancements applied"
+      puts "  ✓ Theme-specific styling generated"
+      puts "  ✓ Interactive JavaScript added"
+      puts "  ✓ Responsive layouts created"
+    end
+
     def finalize_application
       puts "\n🎨 Finalizing application..."
 
@@ -1037,6 +1170,70 @@ module RailsBddGenerator
 
     def app_name
       (@specification['name'] || 'RailsApp').gsub(/\W/, '')
+    end
+
+    # Helper methods for view generation
+    def generate_table_cell(entity, attribute)
+      case attribute.to_s
+      when /price|cost|amount/
+        "<td class=\"price\"><%= format_currency(#{entity[:name]}.#{attribute}) %></td>"
+      when /date/
+        "<td><%= format_date(#{entity[:name]}.#{attribute}) %></td>"
+      when /active|enabled/
+        "<td>
+          <% if #{entity[:name]}.#{attribute} %>
+            <span class=\"badge badge-success\">Active</span>
+          <% else %>
+            <span class=\"badge badge-danger\">Inactive</span>
+          <% end %>
+        </td>"
+      when /status|state/
+        "<td>
+          <span class=\"badge badge-<%= #{entity[:name]}.#{attribute}_badge_class %>\">
+            <%= #{entity[:name]}.#{attribute}.humanize %>
+          </span>
+        </td>"
+      else
+        "<td><%= truncate(#{entity[:name]}.#{attribute}.to_s, length: 50) %></td>"
+      end
+    end
+
+    def generate_show_field(entity, attribute, type)
+      field = <<~ERB
+        <div class="col-md-6" style="margin-bottom: 1rem;">
+          <strong>#{attribute.to_s.humanize}:</strong>
+      ERB
+
+      case type.to_s
+      when /decimal|integer/
+        if attribute.to_s.include?('price') || attribute.to_s.include?('amount')
+          field += "      <span class=\"price\"><%= format_currency(@#{entity[:name]}.#{attribute}) %></span>"
+        else
+          field += "      <%= @#{entity[:name]}.#{attribute} %>"
+        end
+      when /date/
+        field += "      <%= format_date(@#{entity[:name]}.#{attribute}) %>"
+      when /boolean/
+        field += <<~ERB
+              <% if @#{entity[:name]}.#{attribute} %>
+                <span class="badge badge-success">Yes</span>
+              <% else %>
+                <span class="badge badge-danger">No</span>
+              <% end %>
+        ERB
+      when /text/
+        field = <<~ERB
+          <div class="col-12" style="margin-bottom: 1rem;">
+            <strong>#{attribute.to_s.humanize}:</strong>
+            <div style="margin-top: 0.5rem;">
+              <%= simple_format(@#{entity[:name]}.#{attribute}) %>
+            </div>
+        ERB
+      else
+        field += "      <%= @#{entity[:name]}.#{attribute} %>"
+      end
+
+      field + "    </div>"
     end
   end
 end

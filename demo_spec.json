@@ -1,0 +1,77 @@
+{
+  "name": "BookStore",
+  "description": "An online bookstore management system with inventory tracking and order processing",
+  "entities": [
+    {
+      "name": "book",
+      "attributes": {
+        "title": "string",
+        "author": "string",
+        "isbn": "string",
+        "description": "text",
+        "price": "decimal",
+        "stock_quantity": "integer",
+        "published_at": "date",
+        "category": "string",
+        "active": "boolean"
+      }
+    },
+    {
+      "name": "order",
+      "attributes": {
+        "order_number": "string",
+        "total_amount": "decimal",
+        "status": "string",
+        "shipping_address": "text",
+        "payment_method": "string",
+        "notes": "text",
+        "shipped_at": "datetime"
+      }
+    },
+    {
+      "name": "order_item",
+      "attributes": {
+        "quantity": "integer",
+        "unit_price": "decimal",
+        "subtotal": "decimal"
+      }
+    },
+    {
+      "name": "review",
+      "attributes": {
+        "rating": "integer",
+        "title": "string",
+        "content": "text",
+        "verified_purchase": "boolean"
+      }
+    }
+  ],
+  "relationships": [
+    { "from": "user", "to": "order", "type": "has_many" },
+    { "from": "user", "to": "review", "type": "has_many" },
+    { "from": "order", "to": "order_item", "type": "has_many" },
+    { "from": "order_item", "to": "book", "type": "belongs_to" },
+    { "from": "order_item", "to": "order", "type": "belongs_to" },
+    { "from": "review", "to": "book", "type": "belongs_to" },
+    { "from": "review", "to": "user", "type": "belongs_to" },
+    { "from": "book", "to": "review", "type": "has_many" },
+    { "from": "book", "to": "order_item", "type": "has_many" }
+  ],
+  "business_rules": [
+    {
+      "entity": "book",
+      "description": "Price validation",
+      "rule": "Price must be greater than zero"
+    },
+    {
+      "entity": "order",
+      "description": "Status transitions",
+      "rule": "Order status must progress: pending -> processing -> shipped -> delivered"
+    },
+    {
+      "entity": "review",
+      "description": "Rating validation",
+      "rule": "Rating must be between 1 and 5"
+    }
+  ]
+}

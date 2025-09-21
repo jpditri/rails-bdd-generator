@@ -1,0 +1,9 @@
+<h1>Review</h1>
+
+<p><strong>Rating:</strong> <%= @review.rating %></p>
+<p><strong>Title:</strong> <%= @review.title %></p>
+<p><strong>Content:</strong> <%= @review.content %></p>
+<p><strong>Verified purchase:</strong> <%= @review.verified_purchase %></p>
+
+<%= link_to 'Edit', edit_review_path(@review), class: 'btn btn-primary' %>
+<%= link_to 'Back', reviews_path, class: 'btn btn-secondary' %>
