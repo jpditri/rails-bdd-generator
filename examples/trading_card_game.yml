@@ -1,0 +1,44 @@
+name: TCGManager
+description: Trading card game collection manager with deck building
+
+entities:
+  - name: card
+    attributes:
+      name: string
+      mana_cost: integer
+      attack: integer
+      health: integer
+      rarity: string
+      set_code: string
+      card_text: text
+
+  - name: deck
+    attributes:
+      name: string
+      format: string
+      description: text
+
+  - name: collection_item
+    attributes:
+      card_id: integer
+      quantity: integer
+      foil: boolean
+      condition: string
+
+relationships:
+  - from: user
+    to: collection_item
+    type: has_many
+  - from: collection_item
+    to: card
+    type: belongs_to
+  - from: user
+    to: deck
+    type: has_many
+
+features:
+  - Card collection tracking
+  - Deck building and validation
+  - Price tracking
+  - Trade system
+  - Tournament support

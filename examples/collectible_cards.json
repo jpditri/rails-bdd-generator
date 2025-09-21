@@ -1,0 +1,95 @@
+{
+  "name": "CardVault",
+  "description": "A comprehensive collectible card management platform for trading card games",
+  "entities": [
+    {
+      "name": "card",
+      "attributes": {
+        "name": "string",
+        "description": "text",
+        "card_number": "string",
+        "set_name": "string",
+        "rarity": "string",
+        "card_type": "string",
+        "mana_cost": "integer",
+        "attack": "integer",
+        "defense": "integer",
+        "abilities": "text",
+        "flavor_text": "text",
+        "artist": "string",
+        "image_url": "string",
+        "market_price": "decimal",
+        "foil_price": "decimal"
+      }
+    },
+    {
+      "name": "collection",
+      "attributes": {
+        "name": "string",
+        "description": "text",
+        "visibility": "string",
+        "total_value": "decimal",
+        "card_count": "integer",
+        "featured": "boolean"
+      }
+    },
+    {
+      "name": "deck",
+      "attributes": {
+        "name": "string",
+        "format": "string",
+        "description": "text",
+        "main_deck_size": "integer",
+        "sideboard_size": "integer",
+        "legal_status": "string",
+        "wins": "integer",
+        "losses": "integer",
+        "tournament_legal": "boolean"
+      }
+    },
+    {
+      "name": "deck_card",
+      "attributes": {
+        "quantity": "integer",
+        "sideboard": "boolean"
+      }
+    },
+    {
+      "name": "trade",
+      "attributes": {
+        "status": "string",
+        "proposed_at": "datetime",
+        "accepted_at": "datetime",
+        "completed_at": "datetime",
+        "notes": "text"
+      }
+    },
+    {
+      "name": "wishlist",
+      "attributes": {
+        "priority": "integer",
+        "max_price": "decimal",
+        "condition_preference": "string",
+        "quantity_wanted": "integer"
+      }
+    }
+  ],
+  "relationships": [
+    { "from": "user", "to": "collection", "type": "has_many" },
+    { "from": "user", "to": "deck", "type": "has_many" },
+    { "from": "deck", "to": "deck_card", "type": "has_many" },
+    { "from": "deck_card", "to": "card", "type": "belongs_to" },
+    { "from": "user", "to": "trade", "type": "has_many" },
+    { "from": "user", "to": "wishlist", "type": "has_many" },
+    { "from": "wishlist", "to": "card", "type": "belongs_to" }
+  ],
+  "business_rules": [
+    "Users must authenticate to manage collections",
+    "Collections can be public, private, or friends-only",
+    "Track card conditions: Mint, Near Mint, Lightly Played, Moderately Played, Heavily Played, Damaged",
+    "Automatic price updates from multiple market sources",
+    "Deck validation for tournament formats",
+    "Trade matching based on wishlists",
+    "Collection value tracking over time"
+  ]
+}
