@@ -1,5 +1,5 @@
-require 'rails_bdd_generator/version'
-require 'rails_bdd_generator/generator'
+require_relative 'rails_bdd_generator/version'
+require_relative 'rails_bdd_generator/generator'
 
 module RailsBddGenerator
   class Error < StandardError; end

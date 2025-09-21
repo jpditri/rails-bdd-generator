@@ -4,6 +4,8 @@ require 'fileutils'
 require 'pathname'
 require 'active_support/core_ext/string'
 require_relative 'llm_designer'
+require_relative 'test_generator'
+require_relative 'test_helpers'
 
 module RailsBddGenerator
   class Generator
@@ -223,10 +225,14 @@ module RailsBddGenerator
         group :test do
           gem 'cucumber-rails', require: false
           gem 'database_cleaner-active_record'
-          gem 'shoulda-matchers', '~> 5.0'
+          gem 'shoulda-matchers', '~> 6.0'
           gem 'capybara'
           gem 'selenium-webdriver'
           gem 'simplecov'
+          gem 'rspec-retry'
+          gem 'webdrivers'
+          gem 'rspec-benchmark'
+          gem 'test-prof'
         end
 
         group :development do
@@ -246,6 +252,7 @@ module RailsBddGenerator
         db/migrate
         features/step_definitions features/support
         spec/models spec/controllers spec/requests spec/factories
+        spec/features spec/support spec/integration spec/performance
         lib/tasks
       ]
 
@@ -743,42 +750,69 @@ module RailsBddGenerator
     def generate_rspec_tests
       puts "\n🧪 Generating RSpec tests..."
 
+      # Initialize test generator with entities and relationships
+      test_gen = TestGenerator.new(@entities, @relationships, @business_rules || [])
+
       @entities.each do |entity|
-        generate_model_spec(entity)
+        # Generate comprehensive model spec
+        model_spec = test_gen.generate_model_spec(entity)
+        File.write(@output_path.join("spec/models/#{entity[:name]}_spec.rb"), model_spec)
+
+        # Generate factory with traits
+        factory = test_gen.generate_factory(entity)
+        File.write(@output_path.join("spec/factories/#{entity[:name].pluralize}.rb"), factory)
+
+        # Generate feature spec
+        feature_spec = test_gen.generate_feature_spec(entity)
+        File.write(@output_path.join("spec/features/#{entity[:name].pluralize}_management_spec.rb"), feature_spec)
+
+        # Generate request spec for API
+        request_spec = test_gen.generate_request_spec(entity)
+        File.write(@output_path.join("spec/requests/api_v1_#{entity[:name].pluralize}_spec.rb"), request_spec)
+
+        # Keep legacy controller spec for now
         generate_controller_spec(entity)
       end
 
-      puts "  ✓ Generated test specs"
+      # Generate test helpers
+      generate_test_helpers
+
+      puts "  ✓ Generated comprehensive test suite"
     end
 
-    def generate_model_spec(entity)
-      spec_content = <<~RUBY
-        require 'rails_helper'
+    def generate_test_helpers
+      # Generate Rails helper with comprehensive setup
+      rails_helper = TestHelpers.generate_rails_helper
+      File.write(@output_path.join('spec/rails_helper.rb'), rails_helper)
 
-        RSpec.describe #{entity[:name].capitalize}, type: :model do
-          describe 'associations' do
-            #{generate_association_tests(entity)}
-          end
+      # Create support directory
+      FileUtils.mkdir_p(@output_path.join('spec/support'))
 
-          describe 'validations' do
-            #{generate_validation_tests(entity)}
-          end
+      # Generate authentication helpers
+      auth_helpers = TestHelpers.generate_authentication_helpers
+      File.write(@output_path.join('spec/support/authentication_helpers.rb'), auth_helpers)
 
-          describe 'scopes' do
-            describe '.active' do
-              it 'returns active records' do
-                active = create(:#{entity[:name]}, active: true)
-                inactive = create(:#{entity[:name]}, active: false)
+      # Generate API helpers
+      api_helpers = TestHelpers.generate_api_helpers
+      File.write(@output_path.join('spec/support/api_helpers.rb'), api_helpers)
 
-                expect(described_class.active).to include(active)
-                expect(described_class.active).not_to include(inactive)
-              end
-            end
-          end
-        end
-      RUBY
+      # Generate OAuth helpers
+      oauth_helpers = TestHelpers.generate_oauth_helpers
+      File.write(@output_path.join('spec/support/oauth_helpers.rb'), oauth_helpers)
 
-      File.write(@output_path.join("spec/models/#{entity[:name]}_spec.rb"), spec_content)
+      # Generate shared examples
+      shared_examples = TestHelpers.generate_shared_examples
+      File.write(@output_path.join('spec/support/shared_examples.rb'), shared_examples)
+
+      # Generate database test resilience spec
+      db_resilience = TestHelpers.generate_database_test_resilience
+      File.write(@output_path.join('spec/database_test_resilience_spec.rb'), db_resilience)
+
+      # Generate performance test
+      performance_test = TestHelpers.generate_performance_test
+      File.write(@output_path.join('spec/performance/performance_spec.rb'), performance_test)
+
+      puts "  ✓ Generated test helpers and support files"
     end
 
     def generate_association_tests(entity)

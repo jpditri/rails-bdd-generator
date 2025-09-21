@@ -6,12 +6,14 @@ An agentic Ruby gem that generates complete Rails applications using Behavior-Dr
 
 - 🤖 **AI-Powered Design**: Uses Claude AI to intelligently design your Rails application
 - 🚀 **Agentic Generation**: Builds complete Rails 8 apps from simple descriptions
-- 🧪 **Full BDD/TDD Coverage**: AI-generated Cucumber features and RSpec tests
+- 🧪 **Enterprise Testing**: Comprehensive test suite with factories, traits, and resilience patterns
 - 🔐 **Rails 8 Authentication**: Uses Rails 8's built-in authentication (no Devise needed!)
 - 📊 **Smart Database Design**: AI-designed entities, attributes, and relationships
 - 🌐 **API First**: RESTful JSON API with authentication
 - 🔍 **Search & Filter**: Built-in search, pagination, and filtering
 - ✅ **Production Ready**: Validation, error handling, and security best practices
+- 🎯 **Test Coverage**: Model specs, feature specs, request specs, and performance tests
+- 🏭 **Smart Factories**: FactoryBot with contextual traits for realistic test data
 
 ## Installation
 
@@ -178,12 +180,15 @@ rails server
 - Database migrations
 - Seed data
 
-### Full Test Suite
-- Cucumber features for user journeys
-- RSpec specs for models and controllers
-- Request specs for API endpoints
-- Factory Bot factories
-- Test fixtures
+### Enterprise Test Suite
+- **Model Specs**: Comprehensive testing with associations, validations, callbacks, and business logic
+- **Feature Specs**: Resilient Capybara tests with OAuth support and graceful fallbacks
+- **Request Specs**: API endpoint testing with authentication and pagination
+- **Factory Bot**: Smart factories with contextual traits (wealthy, broke, pending, etc.)
+- **Test Helpers**: Authentication, API, and OAuth helpers for DRY tests
+- **Performance Tests**: N+1 detection, response time benchmarks, memory profiling
+- **Database Resilience**: Transaction rollback handling and concurrent access tests
+- **Shared Examples**: Reusable test patterns for common behaviors
 
 ### Authentication System
 - Rails 8 built-in authentication
@@ -237,9 +242,15 @@ rails server
 
 Run tests:
 ```bash
-cucumber           # BDD feature tests
-rspec             # Unit/integration tests
+bundle exec rspec          # Run full test suite
+bundle exec rspec spec/models     # Model tests only
+bundle exec rspec spec/features   # Feature tests only
+bundle exec rspec spec/requests   # API tests only
+bundle exec cucumber       # BDD feature tests
+COVERAGE=true bundle exec rspec   # With code coverage
 ```
+
+See [TESTING_BEST_PRACTICES.md](TESTING_BEST_PRACTICES.md) for detailed testing documentation.
 
 Default admin login:
 - Email: admin@example.com
