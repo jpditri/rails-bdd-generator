@@ -251,7 +251,9 @@ module RailsBddGenerator
       json_match = content.match(/\{.*\}/m)
 
       if json_match
-        JSON.parse(json_match[0])
+        # Clean invalid control characters from JSON
+        cleaned_json = json_match[0].gsub(/[\x00-\x1f\x7f]/, ' ')
+        JSON.parse(cleaned_json)
       else
         # Fallback to basic parsing if no JSON found
         {
@@ -280,7 +282,9 @@ module RailsBddGenerator
       json_match = content.match(/\{.*\}/m)
 
       if json_match
-        JSON.parse(json_match[0])
+        # Clean invalid control characters from JSON
+        cleaned_json = json_match[0].gsub(/[\x00-\x1f\x7f]/, ' ')
+        JSON.parse(cleaned_json)
       else
         # Parse raw cucumber feature text
         features = content.split(/^Feature:/).reject(&:empty?)
@@ -294,9 +298,39 @@ module RailsBddGenerator
           end
         }
       end
-    rescue => e
+    rescue JSON::ParserError => e
       puts "Warning: Error parsing Cucumber response: #{e.message}"
+      # Try to extract features from text even if JSON is malformed
+      parse_features_from_text(content)
+    rescue => e
+      puts "Warning: Unexpected error parsing response: #{e.message}"
       { 'features' => [] }
+    end
+
+    def parse_features_from_text(content)
+      features = []
+
+      # Try to extract feature blocks even from malformed JSON
+      content.scan(/"name"\s*:\s*"([^"]+)".*?"content"\s*:\s*"((?:[^"]|\\")+)"/m) do |name, feature_content|
+        features << {
+          'name' => name,
+          'content' => feature_content.gsub(/\\n/, "\n").gsub(/\\"/, '"'),
+          'step_definitions' => ''
+        }
+      end
+
+      if features.empty?
+        # Fallback to simple feature extraction
+        content.split(/Feature:/).reject(&:empty?).each do |feature|
+          features << {
+            'name' => feature.lines.first&.strip || 'Feature',
+            'content' => "Feature: #{feature}",
+            'step_definitions' => ''
+          }
+        end
+      end
+
+      { 'features' => features }
     end
 
     def parse_implementation_response(response)
@@ -305,7 +339,9 @@ module RailsBddGenerator
       json_match = content.match(/\{.*\}/m)
 
       if json_match
-        JSON.parse(json_match[0])
+        # Clean invalid control characters from JSON
+        cleaned_json = json_match[0].gsub(/[\x00-\x1f\x7f]/, ' ')
+        JSON.parse(cleaned_json)
       else
         # Parse code blocks from the response
         extract_code_blocks_from_text(content)

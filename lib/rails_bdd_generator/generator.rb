@@ -11,7 +11,7 @@ module RailsBddGenerator
 
     def initialize(specification, output_path: nil)
       @specification = parse_specification(specification)
-      @output_path = output_path || Pathname.pwd.join('generated_app')
+      @output_path = Pathname.new(output_path || Pathname.pwd.join('generated_app'))
       @entities = []
       @features = []
       @migrations = []
