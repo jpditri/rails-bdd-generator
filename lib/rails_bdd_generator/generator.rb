@@ -7,6 +7,7 @@ require_relative 'llm_designer'
 require_relative 'test_generator'
 require_relative 'test_helpers'
 require_relative 'ux_enhancer'
+require_relative 'githooks'
 
 module RailsBddGenerator
   class Generator
@@ -45,6 +46,7 @@ module RailsBddGenerator
       generate_rspec_tests
       generate_api_layer
       enhance_ux
+      install_quality_tools
       finalize_application
 
       puts "\n✅ Rails application generated successfully!"
@@ -52,6 +54,7 @@ module RailsBddGenerator
       puts "\n📝 Next steps:"
       puts "  cd #{@output_path}"
       puts "  bundle install"
+      puts "  ./bin/install-hooks  # Install git hooks for quality"
       puts "  rails db:create db:migrate db:seed"
       puts "  rails server"
 
@@ -1008,6 +1011,162 @@ module RailsBddGenerator
       RUBY
 
       File.write(@output_path.join("app/serializers/#{entity[:name]}_serializer.rb"), serializer_content)
+    end
+
+    def install_quality_tools
+      puts "\n🔧 Installing quality assurance tools..."
+
+      # Install Git hooks
+      Githooks.install!(@output_path)
+
+      # Generate RuboCop configuration
+      generate_rubocop_config
+
+      # Generate GitHub Actions workflow
+      generate_github_actions
+
+      # Add code quality gems to Gemfile
+      add_quality_gems
+
+      puts "  ✓ Quality tools configured"
+    end
+
+    def generate_rubocop_config
+      rubocop_config = <<~YAML
+        # RuboCop configuration for Rails BDD Generated apps
+        require:
+          - rubocop-rails
+          - rubocop-rspec
+
+        AllCops:
+          NewCops: enable
+          Exclude:
+            - 'db/**/*'
+            - 'config/**/*'
+            - 'script/**/*'
+            - 'bin/*'
+            - 'vendor/**/*'
+            - 'node_modules/**/*'
+            - 'tmp/**/*'
+
+        Style/Documentation:
+          Enabled: false
+
+        Metrics/BlockLength:
+          Exclude:
+            - 'spec/**/*'
+            - 'config/routes.rb'
+
+        Metrics/ClassLength:
+          Max: 150
+
+        Metrics/MethodLength:
+          Max: 20
+
+        Layout/LineLength:
+          Max: 120
+          Exclude:
+            - 'config/initializers/*'
+
+        Rails:
+          Enabled: true
+
+        RSpec/ExampleLength:
+          Max: 20
+
+        RSpec/MultipleExpectations:
+          Max: 5
+      YAML
+
+      File.write(@output_path.join('.rubocop.yml'), rubocop_config)
+    end
+
+    def generate_github_actions
+      FileUtils.mkdir_p(@output_path.join('.github/workflows'))
+
+      ci_workflow = <<~YAML
+        name: CI
+
+        on:
+          push:
+            branches: [ main, develop ]
+          pull_request:
+            branches: [ main ]
+
+        jobs:
+          test:
+            runs-on: ubuntu-latest
+
+            services:
+              postgres:
+                image: postgres:14
+                env:
+                  POSTGRES_PASSWORD: postgres
+                options: >-
+                  --health-cmd pg_isready
+                  --health-interval 10s
+                  --health-timeout 5s
+                  --health-retries 5
+                ports:
+                  - 5432:5432
+
+            steps:
+            - uses: actions/checkout@v3
+
+            - name: Set up Ruby
+              uses: ruby/setup-ruby@v1
+              with:
+                ruby-version: '3.3'
+                bundler-cache: true
+
+            - name: Setup database
+              env:
+                DATABASE_URL: postgresql://postgres:postgres@localhost:5432/test
+                RAILS_ENV: test
+              run: |
+                bundle exec rails db:create
+                bundle exec rails db:schema:load
+
+            - name: Run RuboCop
+              run: bundle exec rubocop
+
+            - name: Run RSpec tests
+              env:
+                DATABASE_URL: postgresql://postgres:postgres@localhost:5432/test
+                RAILS_ENV: test
+              run: bundle exec rspec
+
+            - name: Run Cucumber features
+              env:
+                DATABASE_URL: postgresql://postgres:postgres@localhost:5432/test
+                RAILS_ENV: test
+              run: bundle exec cucumber
+      YAML
+
+      File.write(@output_path.join('.github/workflows/ci.yml'), ci_workflow)
+    end
+
+    def add_quality_gems
+      gemfile_path = @output_path.join('Gemfile')
+      content = File.read(gemfile_path)
+
+      quality_gems = <<~RUBY
+
+        # Code quality tools
+        group :development do
+          gem 'rubocop', require: false
+          gem 'rubocop-rails', require: false
+          gem 'rubocop-rspec', require: false
+          gem 'brakeman', require: false  # Security scanner
+          gem 'bundler-audit', require: false  # Dependency scanner
+          gem 'rails_best_practices', require: false
+        end
+      RUBY
+
+      # Append quality gems if not already present
+      unless content.include?('rubocop')
+        File.open(gemfile_path, 'a') { |f| f.write(quality_gems) }
+      end
     end
 
     def enhance_ux

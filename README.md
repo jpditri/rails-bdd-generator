@@ -18,6 +18,9 @@ An agentic Ruby gem that generates complete Rails applications using Behavior-Dr
 - 🎯 **Test Coverage**: Model specs, feature specs, request specs, and performance tests
 - 🏭 **Smart Factories**: FactoryBot with contextual traits for realistic test data
 - 💅 **Beautiful UI**: Cards, responsive tables, badges, and modern components out of the box
+- 🔧 **Git Hooks**: Quality assurance with pre-commit and pre-push checks
+- 🚦 **CI/CD Ready**: GitHub Actions workflow with automated testing
+- 🔒 **Security Tools**: Brakeman and bundler-audit for vulnerability scanning
 
 ## Installation
 
@@ -194,6 +197,16 @@ Check out the [demo folder](demo/) to see a complete example of what gets genera
 - **Theme-aware styling** that adapts to your application domain
 - **Interactive JavaScript** for enhanced UX
 
+### Quality Assurance Tools
+- **Git Hooks** for automated quality checks
+  - Pre-commit: debugging statements, migration safety, sensitive data
+  - Pre-push: pending migrations, test suite, bundle verification
+  - Commit-msg: conventional commit format enforcement
+- **RuboCop** configuration with Rails and RSpec cops
+- **GitHub Actions** CI/CD pipeline
+- **Security scanners** (Brakeman, bundler-audit)
+- Installation script at `bin/install-hooks`
+
 ### Enterprise Test Suite
 - **Model Specs**: Comprehensive testing with associations, validations, callbacks, and business logic
 - **Feature Specs**: Resilient Capybara tests with OAuth support and graceful fallbacks
@@ -250,6 +263,7 @@ my_app/
 ```bash
 cd ./my_app
 bundle install
+./bin/install-hooks        # Install git hooks for quality
 rails db:create db:migrate db:seed
 rails server
 ```
@@ -264,7 +278,20 @@ bundle exec cucumber       # BDD feature tests
 COVERAGE=true bundle exec rspec   # With code coverage
 ```
 
-See [TESTING_BEST_PRACTICES.md](TESTING_BEST_PRACTICES.md) for detailed testing documentation.
+Run quality checks:
+```bash
+bundle exec rubocop        # Check code style
+bundle exec rubocop -a     # Auto-correct issues
+bundle exec brakeman       # Security scan
+bundle exec bundle-audit   # Check for vulnerable gems
+```
+
+## Documentation
+
+- [TESTING_BEST_PRACTICES.md](TESTING_BEST_PRACTICES.md) - Comprehensive testing guide
+- [QUALITY_ASSURANCE.md](QUALITY_ASSURANCE.md) - Git hooks and quality tools
+- [CHANGELOG.md](CHANGELOG.md) - Version history and updates
+- [demo/](demo/) - Example BookStore application
 
 Default admin login:
 - Email: admin@example.com
