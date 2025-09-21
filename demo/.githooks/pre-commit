@@ -8,7 +8,7 @@ echo "🔍 Running pre-commit checks..."
 
 # 1. Check for debugging statements
 echo "Checking for debugging statements..."
-debugging_statements=$(git diff --cached --name-only --diff-filter=ACM | xargs -I {} grep -l 'binding\.pry\|debugger\|console\.log\|puts.*DEBUG' {} 2>/dev/null || true)
+debugging_statements=$(git diff --cached --name-only --diff-filter=ACM | grep -v 'tmp/\|log/\|\.githooks' | xargs -I {} grep -l 'binding\.pry\|debugger\|console\.log\|puts.*DEBUG' {} 2>/dev/null || true)
 
 if [ -n "$debugging_statements" ]; then
   echo "❌ Debugging statements found in:"

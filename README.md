@@ -178,12 +178,36 @@ rails server
 ## Demo - BookStore Application
 
 Check out the [demo folder](demo/) to see a complete example of what gets generated, including a bookstore application with:
-- Literary-themed UI with warm book-like colors
-- Complete CRUD for books, orders, and reviews
-- Smart inventory tracking with stock status badges
-- Comprehensive test coverage with factory traits
 
-See [UI Examples](demo/screenshots/README.md) for detailed descriptions of the generated user interface.
+### 🎨 **Theme-Aware UI**
+- **Literary theme** automatically applied based on domain detection
+- Warm book-like colors (#8B4513 browns, #FAF8F5 off-white backgrounds)
+- Card-based layouts with responsive design
+- Modern components with hover effects and animations
+
+### 📚 **Complete Features**
+- Full CRUD operations for books, orders, order items, and reviews
+- Search and filtering functionality
+- Stock status badges (In Stock, Low Stock, Out of Stock)
+- RESTful API endpoints at `/api/v1/`
+- Sample data with classic literature titles
+
+### 🧪 **Production-Ready Code**
+- Comprehensive test coverage with factory traits
+- Git hooks for quality assurance
+- RuboCop configuration and GitHub Actions
+- Security scanning with Brakeman and bundler-audit
+
+### 🚀 **Running the Demo**
+```bash
+cd demo/
+bundle install
+rails db:create db:migrate db:seed
+rails server
+# Visit http://localhost:3000/books
+```
+
+See [UI Documentation](demo/screenshots/README.md) for detailed descriptions of the generated user interface, theme features, and technical implementation.
 
 ## What Gets Generated
 

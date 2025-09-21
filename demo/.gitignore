@@ -1,0 +1,45 @@
+# Rails generated files
+tmp/
+log/
+storage/
+.byebug_history
+.ruby-version
+.bundle/
+vendor/bundle/
+
+# Database
+*.sqlite3
+*.sqlite3-journal
+*.sqlite3-*
+
+# Configuration files with secrets
+config/master.key
+.env
+.env.*
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Coverage reports
+coverage/
+
+# Node modules (if using)
+node_modules/
+
+# Yarn integrity file
+.yarn-integrity
+
+# Pre-compiled assets
+public/assets/
+public/packs/
+public/packs-test/
+
+# Cache
+.cache/

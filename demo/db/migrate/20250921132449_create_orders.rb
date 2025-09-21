@@ -1,4 +1,4 @@
-class CreateOrders < ActiveRecord::Migration[7.1]
+class CreateOrders < ActiveRecord::Migration[8.0]
   def change
     create_table :orders do |t|
       t.string :order_number
