@@ -24,20 +24,18 @@ Gem::Specification.new do |spec|
   spec.executables   = ["rails-bdd-generator"]
   spec.require_paths = ["lib"]
 
-  # Core Rails dependencies - required for generated apps
-  spec.add_dependency "rails", "~> 7.1"
-  spec.add_dependency "activesupport", ">= 7.0"
-  spec.add_dependency "activerecord", ">= 7.0"
-  spec.add_dependency "actionpack", ">= 7.0"
+  # Core Rails 8 dependencies - required for generated apps
+  spec.add_dependency "rails", "~> 8.0"
+  spec.add_dependency "activesupport", ">= 8.0"
+  spec.add_dependency "activerecord", ">= 8.0"
+  spec.add_dependency "actionpack", ">= 8.0"
   spec.add_dependency "thor", "~> 1.0"
 
   # Database
   spec.add_dependency "pg", "~> 1.5"
-  spec.add_dependency "sqlite3", "~> 1.6"
+  spec.add_dependency "sqlite3", "~> 2.0"
 
-  # Authentication
-  spec.add_dependency "devise", "~> 4.9"
-  spec.add_dependency "devise-jwt", "~> 0.11"
+  # Rails 8 includes built-in authentication - no Devise needed!
 
   # Testing dependencies for generated apps
   spec.add_dependency "rspec-rails", "~> 6.0"

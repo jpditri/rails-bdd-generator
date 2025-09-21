@@ -174,13 +174,12 @@ module RailsBddGenerator
       gemfile_content = <<~RUBY
         source 'https://rubygems.org'
 
-        ruby '3.2.0'
+        ruby '3.3.0'
 
-        gem 'rails', '~> 7.1.0'
+        gem 'rails', '~> 8.0.0'
         gem 'pg', '~> 1.5'
         gem 'puma', '~> 6.0'
-        gem 'devise', '~> 4.9'
-        gem 'devise-jwt', '~> 0.11'
+        gem 'bcrypt', '~> 3.1'  # Rails 8 uses bcrypt for authentication
         gem 'rack-cors'
         gem 'active_model_serializers', '~> 0.10'
         gem 'kaminari', '~> 1.2'
@@ -372,7 +371,7 @@ module RailsBddGenerator
     def generate_controller(entity)
       controller_content = <<~RUBY
         class #{entity[:name].capitalize.pluralize}Controller < ApplicationController
-          before_action :authenticate_user!
+          before_action :require_authentication  # Rails 8 built-in auth
           before_action :set_#{entity[:name]}, only: %i[show edit update destroy]
 
           def index
@@ -569,7 +568,9 @@ module RailsBddGenerator
 
       routes_content = <<~RUBY
         Rails.application.routes.draw do
-          devise_for :users
+          # Rails 8 built-in authentication routes
+          resource :session
+          resources :passwords, param: :token
 
           root 'home#index'
 

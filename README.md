@@ -4,9 +4,9 @@ An agentic Ruby gem that generates complete Rails applications using Behavior-Dr
 
 ## Features
 
-- 🚀 **Agentic Generation**: Intelligently builds complete Rails apps from simple descriptions
+- 🚀 **Agentic Generation**: Intelligently builds complete Rails 8 apps from simple descriptions
 - 🧪 **Full BDD/TDD Coverage**: Cucumber features and RSpec tests for everything
-- 🔐 **Authentication Ready**: Devise integration with JWT support
+- 🔐 **Rails 8 Authentication**: Uses Rails 8's built-in authentication (no Devise needed!)
 - 📊 **Smart Database Design**: Automatic migrations and relationships
 - 🌐 **API First**: RESTful JSON API with authentication
 - 🔍 **Search & Filter**: Built-in search, pagination, and filtering
@@ -163,7 +163,9 @@ rails server
 - Test fixtures
 
 ### Authentication System
-- Devise setup with JWT tokens
+- Rails 8 built-in authentication
+- Session-based authentication for web
+- Token authentication for API
 - User registration and login
 - Password recovery
 - Role-based access control
@@ -222,8 +224,8 @@ Default admin login:
 
 ## Requirements
 
-- Ruby 2.7+
-- Rails 7.1+
+- Ruby 3.3+
+- Rails 8.0+
 - PostgreSQL or SQLite
 - Node.js (for assets)
 
