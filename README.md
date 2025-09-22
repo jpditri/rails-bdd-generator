@@ -179,6 +179,20 @@ rails server
 
 Check out the [demo folder](demo/) to see a complete example of what gets generated, including a bookstore application with:
 
+### 📸 **Live Screenshots**
+
+#### Books Index - Responsive table with search and actions
+![Books Index](screenshots/books-index.png)
+
+#### Book Detail - Clean card layout with formatted data
+![Book Detail](screenshots/book-detail.png)
+
+#### New Book Form - User-friendly form with validation
+![New Book Form](screenshots/new-book-form.png)
+
+#### Orders Management - Status tracking and order details
+![Orders Index](screenshots/orders-index.png)
+
 ### 🎨 **Theme-Aware UI**
 - **Literary theme** automatically applied based on domain detection
 - Warm book-like colors (#8B4513 browns, #FAF8F5 off-white backgrounds)
