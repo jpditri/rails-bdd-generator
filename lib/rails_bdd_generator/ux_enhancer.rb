@@ -671,26 +671,11 @@ module RailsBddGenerator
     def theme_logo_styles
       case @theme
       when :literary
-        <<~SCSS
-          &::before {
-            content: "📚";
-            font-size: 1.5rem;
-          }
-        SCSS
+        ""
       when :commerce
-        <<~SCSS
-          &::before {
-            content: "🛍️";
-            font-size: 1.5rem;
-          }
-        SCSS
+        ""
       when :gaming
-        <<~SCSS
-          &::before {
-            content: "🎮";
-            font-size: 1.5rem;
-          }
-        SCSS
+        ""
       else
         ""
       end
@@ -1188,27 +1173,27 @@ module RailsBddGenerator
       features = case @theme
       when :literary
         [
-          { icon: "📖", title: "Browse Collection", desc: "Explore our vast library" },
-          { icon: "⭐", title: "Top Rated", desc: "Discover highly-rated books" },
-          { icon: "🔍", title: "Advanced Search", desc: "Find exactly what you need" }
+          { icon: "<%= book_icon %>", title: "Browse Collection", desc: "Explore our vast library" },
+          { icon: "<%= star_icon %>", title: "Top Rated", desc: "Discover highly-rated books" },
+          { icon: "<%= search_icon %>", title: "Advanced Search", desc: "Find exactly what you need" }
         ]
       when :commerce
         [
-          { icon: "🛒", title: "Shop Now", desc: "Browse our catalog" },
-          { icon: "💳", title: "Secure Checkout", desc: "Safe & fast payment" },
-          { icon: "🚚", title: "Fast Delivery", desc: "Get it delivered quickly" }
+          { icon: "<%= shopping_cart_icon %>", title: "Shop Now", desc: "Browse our catalog" },
+          { icon: "<%= payment_icon %>", title: "Secure Checkout", desc: "Safe & fast payment" },
+          { icon: "<%= delivery_icon %>", title: "Fast Delivery", desc: "Get it delivered quickly" }
         ]
       when :gaming
         [
-          { icon: "🎮", title: "Play Games", desc: "Start your adventure" },
-          { icon: "🏆", title: "Achievements", desc: "Unlock rewards" },
-          { icon: "👥", title: "Multiplayer", desc: "Play with friends" }
+          { icon: "<%= gaming_icon %>", title: "Play Games", desc: "Start your adventure" },
+          { icon: "<%= trophy_icon %>", title: "Achievements", desc: "Unlock rewards" },
+          { icon: "<%= users_icon %>", title: "Multiplayer", desc: "Play with friends" }
         ]
       else
         [
-          { icon: "✨", title: "Feature One", desc: "Amazing capability" },
-          { icon: "🚀", title: "Feature Two", desc: "Powerful performance" },
-          { icon: "💡", title: "Feature Three", desc: "Smart solutions" }
+          { icon: "<%= sparkle_icon %>", title: "Feature One", desc: "Amazing capability" },
+          { icon: "<%= rocket_icon %>", title: "Feature Two", desc: "Powerful performance" },
+          { icon: "<%= lightbulb_icon %>", title: "Feature Three", desc: "Smart solutions" }
         ]
       end
 

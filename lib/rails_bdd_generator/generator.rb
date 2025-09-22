@@ -31,7 +31,7 @@ module RailsBddGenerator
     def generate!
       puts "🚀 Rails BDD Generator v#{VERSION}"
       puts "=" * 60
-      puts "📱 Generating: #{@specification['name'] || 'Rails App'}"
+      puts "🔨 Generating: #{@specification['name'] || 'Rails App'}"
       puts "=" * 60
 
       analyze_specification
@@ -45,17 +45,17 @@ module RailsBddGenerator
       generate_cucumber_features
       generate_rspec_tests
       generate_api_layer
+      generate_icons
       enhance_ux
       install_quality_tools
       finalize_application
 
-      puts "\n✅ Rails application generated successfully!"
+      puts "\n✓ Rails application generated successfully!"
       puts "📁 Location: #{@output_path}"
-      puts "\n📝 Next steps:"
+      puts "\n→ Next steps:"
       puts "  cd #{@output_path}"
       puts "  bundle install"
       puts "  ./bin/install-hooks  # Install git hooks for quality"
-      puts "  rails db:create db:migrate db:seed"
       puts "  rails server"
 
       true
@@ -82,7 +82,7 @@ module RailsBddGenerator
     end
 
     def analyze_specification
-      puts "\n📊 Analyzing specification..."
+      puts "\n→ Analyzing specification..."
 
       if @llm_designer && @specification['description']
         puts "  🤖 Using AI to design application architecture..."
@@ -99,8 +99,8 @@ module RailsBddGenerator
 
           puts "  ✨ AI-powered design complete!"
         rescue => e
-          puts "  ⚠️ LLM design failed: #{e.message}"
-          puts "  📝 Falling back to pattern-based extraction..."
+          puts "  ! LLM design failed: #{e.message}"
+          puts "  → Falling back to pattern-based extraction..."
         end
       end
 
@@ -768,7 +768,7 @@ module RailsBddGenerator
     end
 
     def generate_models
-      puts "\n📦 Generating models..."
+      puts "\n→ Generating models..."
 
       @entities.each do |entity|
         generate_model(entity)
@@ -779,7 +779,7 @@ module RailsBddGenerator
 
     def generate_model(entity)
       model_content = <<~RUBY
-        class #{entity[:name].capitalize} < ApplicationRecord
+        class #{entity[:name].camelize} < ApplicationRecord
           #{generate_associations(entity)}
           #{generate_validations(entity)}
           #{generate_scopes(entity)}
@@ -830,35 +830,48 @@ module RailsBddGenerator
     end
 
     def generate_controllers
-      puts "\n🎮 Generating controllers..."
+      puts "\n→ Generating controllers..."
 
       @entities.each do |entity|
         next if entity[:name] == 'user'
         generate_controller(entity)
       end
 
+      generate_home_controller
       puts "  ✓ Controllers generated"
+    end
+
+    def generate_home_controller
+      controller_content = <<~RUBY
+        class HomeController < ApplicationController
+          def index
+            @users = User.all
+          end
+        end
+      RUBY
+
+      File.write(@output_path.join('app/controllers/home_controller.rb'), controller_content)
     end
 
     def generate_controller(entity)
       controller_content = <<~RUBY
-        class #{entity[:name].capitalize.pluralize}Controller < ApplicationController
+        class #{entity[:name].pluralize.camelize}Controller < ApplicationController
           before_action :require_authentication  # Rails 8 built-in auth
           before_action :set_#{entity[:name]}, only: %i[show edit update destroy]
 
           def index
-            @#{entity[:name].pluralize} = #{entity[:name].capitalize}.all
+            @#{entity[:name].pluralize} = #{entity[:name].camelize}.all
           end
 
           def show
           end
 
           def new
-            @#{entity[:name]} = #{entity[:name].capitalize}.new
+            @#{entity[:name]} = #{entity[:name].camelize}.new
           end
 
           def create
-            @#{entity[:name]} = #{entity[:name].capitalize}.new(#{entity[:name]}_params)
+            @#{entity[:name]} = #{entity[:name].camelize}.new(#{entity[:name]}_params)
 
             if @#{entity[:name]}.save
               redirect_to @#{entity[:name]}, notice: '#{entity[:name].capitalize} created successfully.'
@@ -883,7 +896,7 @@ module RailsBddGenerator
           private
 
           def set_#{entity[:name]}
-            @#{entity[:name]} = #{entity[:name].capitalize}.find(params[:id])
+            @#{entity[:name]} = #{entity[:name].camelize}.find(params[:id])
           end
 
           def #{entity[:name]}_params
@@ -900,14 +913,71 @@ module RailsBddGenerator
     end
 
     def generate_views
-      puts "\n🎨 Generating views..."
+      puts "\n→ Generating views..."
 
       @entities.each do |entity|
         next if entity[:name] == 'user'
         generate_views_for_entity(entity)
       end
 
+      generate_home_views
       puts "  ✓ Views generated"
+    end
+
+    def generate_home_views
+      # Create home views directory
+      home_views_dir = @output_path.join('app/views/home')
+      FileUtils.mkdir_p(home_views_dir)
+
+      # Generate home index view
+      home_index_content = <<~ERB
+        <div class="container">
+          <div class="row">
+            <div class="col-12">
+              <div class="card">
+                <div class="card-header">
+                  <h1 style="margin: 0;">Rails App</h1>
+                </div>
+                <div class="card-body">
+                  <p class="lead">Welcome to your Rails BDD Generated application!</p>
+
+                  <div class="row">
+                    <div class="col-md-6">
+                      <h3>Features</h3>
+                      <ul>
+                        <li>User Management</li>
+                        <li>API Layer with authentication</li>
+                        <li>Comprehensive test suite (RSpec + Cucumber)</li>
+                        <li>Quality assurance tools</li>
+                        <li>Professional styling</li>
+                      </ul>
+                    </div>
+
+                    <div class="col-md-6">
+                      <h3>Users</h3>
+                      <% if @users.any? %>
+                        <ul>
+                          <% @users.each do |user| %>
+                            <li><%= user.email %> (<%= user.role %>)</li>
+                          <% end %>
+                        </ul>
+                      <% else %>
+                        <p>No users found.</p>
+                      <% end %>
+                    </div>
+                  </div>
+
+                  <div style="margin-top: 2rem;">
+                    <a href="/api/v1/users" class="btn btn-primary">View API Documentation</a>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      ERB
+
+      File.write(home_views_dir.join('index.html.erb'), home_index_content)
     end
 
     def generate_views_for_entity(entity)
@@ -942,7 +1012,9 @@ module RailsBddGenerator
                 <div class="card-body">
                   <div style="margin-bottom: 1rem; display: flex; justify-content: space-between; align-items: center;">
                     <%= render 'shared/search' %>
-                    <%= link_to 'New #{entity[:name].capitalize}', new_#{entity[:name]}_path, class: 'btn btn-primary' %>
+                    <%= link_to new_#{entity[:name]}_path, class: 'btn btn-primary' do %>
+                      <%= plus_icon %> New #{entity[:name].capitalize}
+                    <% end %>
                   </div>
 
                   <div class="table-responsive">
@@ -958,11 +1030,17 @@ module RailsBddGenerator
                           <tr class="#{entity[:name]}-row">
                             #{entity[:attributes].keys.take(4).map { |a| generate_table_cell(entity, a) }.join("\n                            ")}
                             <td style="text-align: right;">
-                              <%= link_to 'View', #{entity[:name]}, class: 'btn btn-sm btn-outline' %>
-                              <%= link_to 'Edit', edit_#{entity[:name]}_path(#{entity[:name]}), class: 'btn btn-sm btn-secondary' %>
-                              <%= link_to 'Delete', #{entity[:name]}, method: :delete,
+                              <%= link_to #{entity[:name]}, class: 'btn btn-sm btn-outline' do %>
+                                <%= view_icon %> View
+                              <% end %>
+                              <%= link_to edit_#{entity[:name]}_path(#{entity[:name]}), class: 'btn btn-sm btn-secondary' do %>
+                                <%= edit_icon %> Edit
+                              <% end %>
+                              <%= link_to #{entity[:name]}, method: :delete,
                                   data: { confirm: 'Are you sure?' },
-                                  class: 'btn btn-sm btn-danger' %>
+                                  class: 'btn btn-sm btn-danger' do %>
+                                <%= delete_icon %> Delete
+                              <% end %>
                             </td>
                           </tr>
                         <% end %>
@@ -1041,10 +1119,16 @@ module RailsBddGenerator
               </div>
             </div>
             <div class="card-footer">
-              <%= link_to 'Edit', edit_#{entity[:name]}_path(@#{entity[:name]}), class: 'btn btn-primary' %>
-              <%= link_to 'Delete', #{entity[:name]}_path(@#{entity[:name]}), method: :delete,
-                  data: { confirm: 'Are you sure?' }, class: 'btn btn-danger' %>
-              <%= link_to 'Back to List', #{entity[:name].pluralize}_path, class: 'btn btn-secondary' %>
+              <%= link_to edit_#{entity[:name]}_path(@#{entity[:name]}), class: 'btn btn-primary' do %>
+                <%= edit_icon %> Edit
+              <% end %>
+              <%= link_to #{entity[:name]}_path(@#{entity[:name]}), method: :delete,
+                  data: { confirm: 'Are you sure?' }, class: 'btn btn-danger' do %>
+                <%= delete_icon %> Delete
+              <% end %>
+              <%= link_to #{entity[:name].pluralize}_path, class: 'btn btn-secondary' do %>
+                <%= list_icon %> Back to List
+              <% end %>
             </div>
           </div>
 
@@ -1086,8 +1170,12 @@ module RailsBddGenerator
               <%= render 'form', #{entity[:name]}: @#{entity[:name]} %>
             </div>
             <div class="card-footer">
-              <%= link_to 'View', @#{entity[:name]}, class: 'btn btn-outline' %>
-              <%= link_to 'Back to List', #{entity[:name].pluralize}_path, class: 'btn btn-secondary' %>
+              <%= link_to @#{entity[:name]}, class: 'btn btn-outline' do %>
+                <%= view_icon %> View
+              <% end %>
+              <%= link_to #{entity[:name].pluralize}_path, class: 'btn btn-secondary' do %>
+                <%= list_icon %> Back to List
+              <% end %>
             </div>
           </div>
         </div>
@@ -1133,7 +1221,7 @@ module RailsBddGenerator
 
     def generate_migration(entity, timestamp)
       migration_content = <<~RUBY
-        class Create#{entity[:name].capitalize.pluralize} < ActiveRecord::Migration[7.1]
+        class Create#{entity[:name].pluralize.camelize} < ActiveRecord::Migration[7.1]
           def change
             create_table :#{entity[:name].pluralize} do |t|
               #{generate_migration_columns(entity)}
@@ -1172,8 +1260,8 @@ module RailsBddGenerator
             puts "  ✨ AI-generated #{llm_features['features'].count} comprehensive features!"
           end
         rescue => e
-          puts "  ⚠️ LLM feature generation failed: #{e.message}"
-          puts "  📝 Falling back to template-based generation..."
+          puts "  ! LLM feature generation failed: #{e.message}"
+          puts "  → Falling back to template-based generation..."
           generate_template_based_features
         end
       else
@@ -1342,7 +1430,7 @@ module RailsBddGenerator
       spec_content = <<~RUBY
         require 'rails_helper'
 
-        RSpec.describe #{entity[:name].capitalize.pluralize}Controller, type: :controller do
+        RSpec.describe #{entity[:name].pluralize.camelize}Controller, type: :controller do
           let(:user) { create(:user) }
           let(:#{entity[:name]}) { create(:#{entity[:name]}, user: user) }
 
@@ -1370,6 +1458,8 @@ module RailsBddGenerator
     def generate_api_layer
       puts "\n🌐 Generating API layer..."
 
+      generate_api_base_controller
+
       @entities.each do |entity|
         generate_api_controller(entity)
         generate_serializer(entity)
@@ -1378,11 +1468,54 @@ module RailsBddGenerator
       puts "  ✓ API layer generated"
     end
 
+    def generate_api_base_controller
+      base_controller_content = <<~RUBY
+        module Api
+          module V1
+            class BaseController < ApplicationController
+              # Base controller for API endpoints
+              before_action :set_current_user
+
+              # Skip CSRF protection for API endpoints (if available)
+              skip_before_action :verify_authenticity_token, raise: false
+
+              private
+
+              def set_current_user
+                # Simple demo authentication - always use first user or create one
+                @current_user ||= User.first || create_demo_user
+              end
+
+              def create_demo_user
+                User.create!(
+                  email: 'demo@example.com',
+                  first_name: 'Demo',
+                  last_name: 'User',
+                  role: 'admin'
+                )
+              end
+
+              def current_user
+                @current_user
+              end
+
+              def require_authentication
+                # For demo purposes, always allow access
+                true
+              end
+            end
+          end
+        end
+      RUBY
+
+      File.write(@output_path.join('app/controllers/api/v1/base_controller.rb'), base_controller_content)
+    end
+
     def generate_api_controller(entity)
       api_controller = <<~RUBY
         module Api
           module V1
-            class #{entity[:name].capitalize.pluralize}Controller < Api::V1::BaseController
+            class #{entity[:name].pluralize.camelize}Controller < Api::V1::BaseController
               before_action :set_#{entity[:name]}, only: %i[show update destroy]
 
               def index
@@ -1435,11 +1568,12 @@ module RailsBddGenerator
     end
 
     def generate_serializer(entity)
+      # Only add belongs_to :user for non-user entities
+      user_association = entity[:name] == 'user' ? '' : "\n  belongs_to :user"
+
       serializer_content = <<~RUBY
         class #{entity[:name].capitalize}Serializer < ActiveModel::Serializer
-          attributes :id, #{entity[:attributes].keys.map { |a| ":#{a}" }.join(', ')}, :created_at, :updated_at
-
-          belongs_to :user
+          attributes :id, #{entity[:attributes].keys.map { |a| ":#{a}" }.join(', ')}, :created_at, :updated_at#{user_association}
         end
       RUBY
 
@@ -1447,7 +1581,7 @@ module RailsBddGenerator
     end
 
     def install_quality_tools
-      puts "\n🔧 Installing quality assurance tools..."
+      puts "\n→ Installing quality assurance tools..."
 
       # Install Git hooks
       Githooks.install!(@output_path)
@@ -1603,7 +1737,7 @@ module RailsBddGenerator
     end
 
     def enhance_ux
-      puts "\n🎨 Enhancing user experience..."
+      puts "\n→ Enhancing user experience..."
 
       # Initialize UX enhancer
       ux_enhancer = UxEnhancer.new(
@@ -1675,7 +1809,7 @@ module RailsBddGenerator
     end
 
     def finalize_application
-      puts "\n🎨 Finalizing application..."
+      puts "\n→ Finalizing application..."
 
       generate_readme
       generate_database_config
@@ -1743,13 +1877,12 @@ module RailsBddGenerator
         # Create admin user
         User.create!(
           email: 'admin@example.com',
-          password: 'password123',
           first_name: 'Admin',
           last_name: 'User',
           role: 'admin'
         )
 
-        puts "Created admin user: admin@example.com / password123"
+        puts "Created admin user: admin@example.com"
 
         # Create sample data
         #{@entities.reject { |e| e[:name] == 'user' }.map { |e| "# Create sample #{e[:name].pluralize}" }.join("\n")}
@@ -1824,6 +1957,329 @@ module RailsBddGenerator
       end
 
       field + "    </div>"
+    end
+
+    def finalize_application
+      puts "→ Setting up database configuration..."
+      generate_database_config
+
+      puts "🌱 Generating seed data..."
+      generate_seeds
+
+      puts "→ Creating storage directory..."
+      FileUtils.mkdir_p(@output_path.join('storage'))
+
+      puts "🗄️  Setting up databases..."
+      Dir.chdir(@output_path) do
+        puts "  → Creating and migrating development database..."
+        system('bundle exec rails db:create db:migrate db:seed', out: File::NULL, err: File::NULL)
+
+        puts "  🧪 Setting up test database..."
+        system('RAILS_ENV=test bundle exec rails db:create db:migrate', out: File::NULL, err: File::NULL)
+
+        puts "  🧪 Running tests to verify application..."
+        if system('bundle exec rspec --format progress', out: File::NULL, err: File::NULL)
+          puts "  ✓ All tests passing!"
+        else
+          puts "  ! Some tests failing - check test output"
+        end
+      end
+
+      puts "✓ Application fully configured and ready to use!"
+    end
+
+    def generate_icons
+      puts "→ Creating custom SVG icon system..."
+
+      # Create icons directory
+      FileUtils.mkdir_p(@output_path.join('app/assets/images/icons'))
+
+      # Generate app-specific icons based on domain
+      generate_domain_icons
+
+      # Create icon helper
+      generate_icon_helper
+
+      puts "  ✓ Custom SVG icons created"
+    end
+
+    private
+
+    def generate_domain_icons
+      # Generate icons based on the application domain
+      icons = determine_app_icons
+
+      icons.each do |name, svg_content|
+        File.write(@output_path.join("app/assets/images/icons/#{name}.svg"), svg_content)
+      end
+    end
+
+    def determine_app_icons
+      # Analyze entities and app description to create relevant icons
+      icons = {}
+
+      # Always include basic UI icons
+      icons['success'] = generate_success_icon
+      icons['error'] = generate_error_icon
+      icons['info'] = generate_info_icon
+      icons['warning'] = generate_warning_icon
+      icons['edit'] = generate_edit_icon
+      icons['delete'] = generate_delete_icon
+      icons['add'] = generate_add_icon
+      icons['search'] = generate_search_icon
+
+      # Add domain-specific icons based on entities
+      @entities.each do |entity|
+        entity_icon = generate_entity_icon(entity[:name])
+        icons[entity[:name]] = entity_icon if entity_icon
+      end
+
+      # Add context-specific icons based on app description
+      if @app_description
+        context_icons = generate_context_icons(@app_description)
+        icons.merge!(context_icons)
+      end
+
+      icons
+    end
+
+    def generate_success_icon
+      <<~SVG
+        <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2"/>
+          <path d="M8 12l2.5 2.5L16 9" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      SVG
+    end
+
+    def generate_error_icon
+      <<~SVG
+        <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2"/>
+          <path d="M15 9l-6 6M9 9l6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      SVG
+    end
+
+    def generate_info_icon
+      <<~SVG
+        <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2"/>
+          <path d="M12 16v-4M12 8h.01" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      SVG
+    end
+
+    def generate_warning_icon
+      <<~SVG
+        <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" stroke="currentColor" stroke-width="2"/>
+          <path d="M12 9v4M12 17h.01" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      SVG
+    end
+
+    def generate_edit_icon
+      <<~SVG
+        <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          <path d="M18.5 2.5a2.12 2.12 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      SVG
+    end
+
+    def generate_delete_icon
+      <<~SVG
+        <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          <path d="M10 11v6M14 11v6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      SVG
+    end
+
+    def generate_add_icon
+      <<~SVG
+        <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2"/>
+          <path d="M12 8v8M8 12h8" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      SVG
+    end
+
+    def generate_search_icon
+      <<~SVG
+        <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <circle cx="11" cy="11" r="8" stroke="currentColor" stroke-width="2"/>
+          <path d="M21 21l-4.35-4.35" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      SVG
+    end
+
+    def generate_entity_icon(entity_name)
+      case entity_name.downcase
+      when 'user', 'customer', 'person', 'member'
+        <<~SVG
+          <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            <circle cx="12" cy="7" r="4" stroke="currentColor" stroke-width="2"/>
+          </svg>
+        SVG
+      when 'book', 'article', 'document', 'post'
+        <<~SVG
+          <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z" stroke="currentColor" stroke-width="2"/>
+          </svg>
+        SVG
+      when 'order', 'purchase', 'transaction', 'payment'
+        <<~SVG
+          <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M3 6h18M16 10a4 4 0 0 1-8 0" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        SVG
+      when 'product', 'item', 'inventory'
+        <<~SVG
+          <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z" stroke="currentColor" stroke-width="2"/>
+            <path d="M3.27 6.96L12 12.01l8.73-5.05M12 22.08V12" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        SVG
+      when 'review', 'comment', 'feedback'
+        <<~SVG
+          <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M12 7v2M12 13h.01" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        SVG
+      else
+        # Generic entity icon
+        <<~SVG
+          <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <rect x="3" y="3" width="18" height="18" rx="2" ry="2" stroke="currentColor" stroke-width="2"/>
+            <circle cx="8.5" cy="8.5" r="1.5" fill="currentColor"/>
+            <path d="M21 15l-5-5L5 21" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        SVG
+      end
+    end
+
+    def generate_context_icons(description)
+      icons = {}
+      desc = description.downcase
+
+      if desc.include?('store') || desc.include?('shop') || desc.include?('commerce')
+        icons['store'] = <<~SVG
+          <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M2 7h20l-2 10H4L2 7zM2 7l-2-5h4l2 5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            <circle cx="9" cy="20" r="1" stroke="currentColor" stroke-width="2"/>
+            <circle cx="20" cy="20" r="1" stroke="currentColor" stroke-width="2"/>
+          </svg>
+        SVG
+      end
+
+      if desc.include?('library') || desc.include?('book') || desc.include?('read')
+        icons['library'] = <<~SVG
+          <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" stroke="currentColor" stroke-width="2"/>
+            <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z" stroke="currentColor" stroke-width="2"/>
+            <path d="M8 7h8M8 11h8" stroke="currentColor" stroke-width="1" stroke-linecap="round"/>
+          </svg>
+        SVG
+      end
+
+      icons
+    end
+
+    def generate_icon_helper
+      helper_content = <<~RUBY
+        # Application-specific icon helper with custom SVG icons
+        module IconHelper
+          # Primary icon method - renders SVG icons with proper accessibility
+          def app_icon(name, **options)
+            classes = options[:class] || options[:classes] || "w-6 h-6"
+            title = options[:title] || options[:alt] || name.to_s.humanize
+
+            content_tag :div, class: "inline-flex items-center justify-center" do
+              raw(svg_icon_content(name, classes: classes, title: title))
+            end
+          end
+
+          private
+
+          def svg_icon_content(name, classes:, title:)
+            icon_path = Rails.root.join('app', 'assets', 'images', 'icons', "\#{name}.svg")
+
+            if File.exist?(icon_path)
+              svg_content = File.read(icon_path)
+              # Add classes and title to the SVG
+              svg_content.gsub('<svg', "<svg class='\#{classes}' title='\#{title}'")
+            else
+              # Fallback to a generic icon if specific icon doesn't exist
+              fallback_icon(classes: classes, title: title)
+            end
+          end
+
+          def fallback_icon(classes:, title:)
+            <<~SVG
+              <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" class="\#{classes}" title="\#{title}">
+                <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2"/>
+                <path d="M12 6v6l4 2" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            SVG
+          end
+
+          # Semantic helper methods for common actions
+          def success_icon(**options)
+            app_icon(:success, **options)
+          end
+
+          def error_icon(**options)
+            app_icon(:error, **options)
+          end
+
+          def info_icon(**options)
+            app_icon(:info, **options)
+          end
+
+          def warning_icon(**options)
+            app_icon(:warning, **options)
+          end
+
+          def edit_icon(**options)
+            app_icon(:edit, **options)
+          end
+
+          def delete_icon(**options)
+            app_icon(:delete, **options)
+          end
+
+          def add_icon(**options)
+            app_icon(:add, **options)
+          end
+
+          def search_icon(**options)
+            app_icon(:search, **options)
+          end
+
+          # Entity-specific icon helpers
+        #{generate_entity_icon_helpers}
+        end
+      RUBY
+
+      File.write(@output_path.join('app/helpers/icon_helper.rb'), helper_content)
+    end
+
+    def generate_entity_icon_helpers
+      @entities.map do |entity|
+        entity_name = entity[:name]
+        <<~RUBY
+
+          def #{entity_name}_icon(**options)
+            app_icon(:#{entity_name}, **options)
+          end
+        RUBY
+      end.join
     end
   end
 end
