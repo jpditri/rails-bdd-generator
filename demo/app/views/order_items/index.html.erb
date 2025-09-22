@@ -1,0 +1,55 @@
+<div class="container">
+  <div class="row">
+    <div class="col-12">
+      <div class="card">
+        <div class="card-header">
+          <h1 style="margin: 0;">Order_items</h1>
+        </div>
+        <div class="card-body">
+          <div style="margin-bottom: 1rem; display: flex; justify-content: space-between; align-items: center;">
+            <%= render 'shared/search' %>
+            <%= link_to 'New Order_item', new_order_item_path, class: 'btn btn-primary' %>
+          </div>
+
+          <div class="table-responsive">
+            <table class="table">
+              <thead>
+                <tr>
+                  <th>Quantity</th>
+                          <th>Unit price</th>
+                          <th>Subtotal</th>
+                  <th style="text-align: right;">Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                <% @order_items.each do |order_item| %>
+                  <tr class="order_item-row">
+                    <td><%= truncate(order_item.quantity.to_s, length: 50) %></td>
+                            <td class="price"><%= format_currency(order_item.unit_price) %></td>
+                            <td><%= truncate(order_item.subtotal.to_s, length: 50) %></td>
+                    <td style="text-align: right;">
+                      <%= link_to 'View', order_item, class: 'btn btn-sm btn-outline' %>
+                      <%= link_to 'Edit', edit_order_item_path(order_item), class: 'btn btn-sm btn-secondary' %>
+                      <%= link_to 'Delete', order_item, method: :delete,
+                          data: { confirm: 'Are you sure?' },
+                          class: 'btn btn-sm btn-danger' %>
+                    </td>
+                  </tr>
+                <% end %>
+                <% if @order_items.empty? %>
+                  <tr>
+                    <td colspan="5" style="text-align: center; padding: 2rem; color: var(--muted);">
+                      No order_items found. <%= link_to 'Create one now', new_order_item_path %>.
+                    </td>
+                  </tr>
+                <% end %>
+              </tbody>
+            </table>
+          </div>
+
+          <%= paginate @order_items %>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

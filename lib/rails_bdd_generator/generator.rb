@@ -208,15 +208,14 @@ module RailsBddGenerator
       gemfile_content = <<~RUBY
         source 'https://rubygems.org'
 
-        ruby '3.3.0'
+        ruby '3.4.4'
 
         gem 'rails', '~> 8.0.0'
-        gem 'pg', '~> 1.5'
+        gem 'sqlite3', '>= 2.1'
         gem 'puma', '~> 6.0'
-        gem 'bcrypt', '~> 3.1'  # Rails 8 uses bcrypt for authentication
+        gem 'bcrypt', '~> 3.1'
         gem 'rack-cors'
         gem 'active_model_serializers', '~> 0.10'
-        gem 'kaminari', '~> 1.2'
         gem 'bootsnap', require: false
 
         group :development, :test do
@@ -251,20 +250,31 @@ module RailsBddGenerator
 
     def create_directory_structure
       dirs = %w[
-        app/controllers app/models app/views app/services app/serializers
+        app/controllers app/models app/views app/views/layouts app/views/shared app/helpers app/services app/serializers
         app/controllers/api app/controllers/api/v1
-        config/initializers
+        config/initializers config/environments
         db/migrate
         features/step_definitions features/support
         spec/models spec/controllers spec/requests spec/factories
         spec/features spec/support spec/integration spec/performance
-        lib/tasks
+        lib/tasks bin
       ]
 
       dirs.each { |dir| FileUtils.mkdir_p(@output_path.join(dir)) }
     end
 
     def create_application_files
+      create_config_files
+      create_bin_files
+      create_application_controller
+      create_application_helper
+      create_application_record
+      create_application_layout
+      create_config_ru
+      create_additional_config_files
+    end
+
+    def create_config_files
       # config/application.rb
       app_config = <<~RUBY
         require_relative 'boot'
@@ -274,7 +284,7 @@ module RailsBddGenerator
 
         module #{app_name}
           class Application < Rails::Application
-            config.load_defaults 7.1
+            config.load_defaults 8.0
             config.api_only = false
 
             config.middleware.insert_before 0, Rack::Cors do
@@ -288,8 +298,431 @@ module RailsBddGenerator
           end
         end
       RUBY
-
       File.write(@output_path.join('config/application.rb'), app_config)
+
+      # config/boot.rb
+      boot_config = <<~RUBY
+        ENV['BUNDLE_GEMFILE'] ||= File.expand_path('../Gemfile', __dir__)
+
+        require 'bundler/setup' # Set up gems listed in the Gemfile.
+        require 'bootsnap/setup' # Speed up boot time by caching expensive operations.
+      RUBY
+      File.write(@output_path.join('config/boot.rb'), boot_config)
+
+      # config/environment.rb
+      env_config = <<~RUBY
+        # Load the Rails application.
+        require_relative 'application'
+
+        # Initialize the Rails application.
+        Rails.application.initialize!
+      RUBY
+      File.write(@output_path.join('config/environment.rb'), env_config)
+
+      # config/routes.rb
+      routes_config = <<~RUBY
+        Rails.application.routes.draw do
+          # Root route
+          root 'books#index'
+
+          # Resource routes will be added here by the generator
+        end
+      RUBY
+      File.write(@output_path.join('config/routes.rb'), routes_config)
+
+      # Rakefile
+      rakefile_content = <<~RUBY
+        # Add your own tasks in files placed in lib/tasks ending in .rake,
+        # for example lib/tasks/capistrano.rake, and they will automatically be available to Rake.
+
+        require_relative 'config/application'
+
+        Rails.application.load_tasks
+      RUBY
+      File.write(@output_path.join('Rakefile'), rakefile_content)
+    end
+
+    def create_bin_files
+      FileUtils.mkdir_p(@output_path.join('bin'))
+
+      # bin/rails
+      rails_bin = <<~BASH
+        #!/usr/bin/env ruby
+        APP_PATH = File.expand_path('../config/application', __dir__)
+        require_relative '../config/boot'
+        require 'rails/commands'
+      BASH
+      File.write(@output_path.join('bin/rails'), rails_bin)
+      File.chmod(0755, @output_path.join('bin/rails').to_s)
+
+      # bin/setup
+      setup_bin = <<~BASH
+        #!/usr/bin/env ruby
+        require 'fileutils'
+
+        # path to your application root.
+        APP_ROOT = File.expand_path('..', __dir__)
+
+        def system!(*args)
+          system(*args) || abort("\\nCommand failed: \#{args}")
+        end
+
+        FileUtils.chdir APP_ROOT do
+          puts '== Installing dependencies =='
+          system! 'gem install bundler --conservative'
+          system('bundle check') || system!('bundle install')
+
+          puts "\\n== Preparing database =="
+          system! 'bin/rails db:prepare'
+
+          puts "\\n== Removing old logs and tempfiles =="
+          system! 'bin/rails log:clear tmp:clear'
+
+          puts "\\n== Restarting application server =="
+          system! 'bin/rails restart'
+        end
+      BASH
+      File.write(@output_path.join('bin/setup'), setup_bin)
+      File.chmod(0755, @output_path.join('bin/setup').to_s)
+    end
+
+    def create_application_controller
+      controller_content = <<~RUBY
+        class ApplicationController < ActionController::Base
+          # Disable CSRF for demo purposes
+          skip_before_action :verify_authenticity_token
+
+          # Simple demo authentication - always use first user or create one
+          before_action :set_current_user
+
+          private
+
+          def set_current_user
+            @current_user ||= User.first || create_demo_user
+          end
+
+          def create_demo_user
+            User.create!(
+              email: 'demo@example.com',
+              first_name: 'Demo',
+              last_name: 'User',
+              role: 'admin'
+            )
+          end
+
+          def current_user
+            @current_user
+          end
+
+          def require_authentication
+            # For demo purposes, always allow access
+            true
+          end
+
+          helper_method :current_user
+        end
+      RUBY
+
+      File.write(@output_path.join('app/controllers/application_controller.rb'), controller_content)
+    end
+
+    def create_application_helper
+      helper_content = <<~RUBY
+        module ApplicationHelper
+          def format_currency(amount)
+            return "N/A" unless amount
+            "$" + sprintf('%.2f', amount)
+          end
+
+          def format_date(date)
+            return "N/A" unless date
+            date.strftime("%B %d, %Y")
+          end
+
+          def truncate_with_tooltip(text, length: 50)
+            return "N/A" unless text
+            if text.length > length
+              content_tag :span, truncate(text, length: length), title: text
+            else
+              text
+            end
+          end
+        end
+      RUBY
+
+      File.write(@output_path.join('app/helpers/application_helper.rb'), helper_content)
+    end
+
+    def create_application_record
+      record_content = <<~RUBY
+        class ApplicationRecord < ActiveRecord::Base
+          primary_abstract_class
+        end
+      RUBY
+
+      File.write(@output_path.join('app/models/application_record.rb'), record_content)
+    end
+
+    def create_application_layout
+      # Ensure layouts directory exists
+      FileUtils.mkdir_p(@output_path.join('app/views/layouts'))
+
+      layout_content = <<~HTML
+        <!DOCTYPE html>
+        <html lang="en">
+        <head>
+          <meta charset="UTF-8">
+          <meta name="viewport" content="width=device-width, initial-scale=1.0">
+          <title><%= content_for?(:title) ? yield(:title) : "#{app_name}" %></title>
+
+          <!-- Font Loading -->
+          <link rel="preconnect" href="https://fonts.googleapis.com">
+          <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+          <link href="https://fonts.googleapis.com/css2?family=Merriweather:wght@300;400;700&display=swap" rel="stylesheet">
+
+          <%= csrf_meta_tags %>
+          <%= csp_meta_tag %>
+
+          <style>
+            /* Basic styling for demo purposes */
+            * {
+              margin: 0;
+              padding: 0;
+              box-sizing: border-box;
+            }
+
+            body {
+              font-family: 'Merriweather', Georgia, serif;
+              line-height: 1.6;
+              color: #333;
+              background-color: #f5f5f5;
+            }
+
+            .container {
+              max-width: 1200px;
+              margin: 0 auto;
+              padding: 0 20px;
+            }
+
+            .navbar {
+              background: #2c3e50;
+              color: white;
+              padding: 1rem 0;
+              margin-bottom: 2rem;
+            }
+
+            .navbar-brand {
+              color: white;
+              text-decoration: none;
+              font-size: 1.5rem;
+              font-weight: 700;
+            }
+
+            .navbar-nav {
+              list-style: none;
+              display: flex;
+              gap: 1rem;
+              margin-top: 0.5rem;
+            }
+
+            .navbar-nav li a {
+              color: #ecf0f1;
+              text-decoration: none;
+              padding: 0.5rem;
+            }
+
+            .navbar-nav li a:hover {
+              color: #3498db;
+            }
+
+            .card {
+              background: white;
+              border-radius: 8px;
+              box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+              margin-bottom: 2rem;
+            }
+
+            .card-header {
+              background: #34495e;
+              color: white;
+              padding: 1rem;
+              border-radius: 8px 8px 0 0;
+            }
+
+            .card-body {
+              padding: 1.5rem;
+            }
+
+            .btn {
+              display: inline-block;
+              padding: 0.5rem 1rem;
+              background: #3498db;
+              color: white;
+              text-decoration: none;
+              border-radius: 4px;
+              border: none;
+              cursor: pointer;
+            }
+
+            .btn:hover {
+              background: #2980b9;
+            }
+
+            .btn-primary {
+              background: #3498db;
+            }
+
+            .btn-secondary {
+              background: #95a5a6;
+            }
+
+            .btn-danger {
+              background: #e74c3c;
+            }
+
+            .btn-sm {
+              padding: 0.25rem 0.5rem;
+              font-size: 0.875rem;
+            }
+
+            .table {
+              width: 100%;
+              border-collapse: collapse;
+              margin-top: 1rem;
+            }
+
+            .table th,
+            .table td {
+              padding: 0.75rem;
+              text-align: left;
+              border-bottom: 1px solid #ddd;
+            }
+
+            .table th {
+              background: #f8f9fa;
+              font-weight: 600;
+            }
+
+            .search-form {
+              display: flex;
+              gap: 0.5rem;
+              margin-bottom: 1rem;
+            }
+
+            .search-form input {
+              flex: 1;
+              padding: 0.5rem;
+              border: 1px solid #ddd;
+              border-radius: 4px;
+            }
+
+            .text-muted {
+              color: #6c757d;
+            }
+
+            .alert {
+              padding: 0.75rem 1rem;
+              margin-bottom: 1rem;
+              border-radius: 4px;
+            }
+
+            .alert-success {
+              background: #d4edda;
+              color: #155724;
+              border: 1px solid #c3e6cb;
+            }
+
+            .alert-danger {
+              background: #f8d7da;
+              color: #721c24;
+              border: 1px solid #f5c6cb;
+            }
+          </style>
+        </head>
+        <body>
+          <nav class="navbar">
+            <div class="container">
+              <%= link_to "#{app_name}", root_path, class: "navbar-brand" %>
+
+              <ul class="navbar-nav">
+                <% if defined?(books_path) %>
+                  <li>
+                    <%= link_to "Books", books_path %>
+                  </li>
+                <% end %>
+                <% if defined?(orders_path) %>
+                  <li>
+                    <%= link_to "Orders", orders_path %>
+                  </li>
+                <% end %>
+                <% if current_user.present? %>
+                  <li>
+                    <span class="text-muted">Demo User: <%= current_user.email %></span>
+                  </li>
+                <% end %>
+              </ul>
+            </div>
+          </nav>
+
+          <main class="container">
+            <%= yield %>
+          </main>
+        </body>
+        </html>
+      HTML
+
+      File.write(@output_path.join('app/views/layouts/application.html.erb'), layout_content)
+    end
+
+    def create_config_ru
+      config_ru_content = <<~RUBY
+        # This file is used by Rack-based servers to start the application.
+
+        require_relative 'config/environment'
+
+        run Rails.application
+        Rails.application.load_server
+      RUBY
+
+      File.write(@output_path.join('config.ru'), config_ru_content)
+    end
+
+    def create_additional_config_files
+      # config/environments/development.rb
+      dev_env = <<~RUBY
+        Rails.application.configure do
+          config.cache_classes = false
+          config.eager_load = false
+          config.consider_all_requests_local = true
+          config.server_timing = true
+
+          if Rails.root.join("tmp/caching-dev.txt").exist?
+            config.action_controller.perform_caching = true
+            config.action_controller.enable_fragment_cache_logging = true
+            config.cache_store = :memory_store
+            config.public_file_server.headers = {
+              "Cache-Control" => "public, max-age=\#{2.days.to_i}"
+            }
+          else
+            config.action_controller.perform_caching = false
+            config.cache_store = :null_store
+          end
+
+          config.active_support.deprecation = :log
+          config.active_support.disallowed_deprecation = :raise
+          config.active_support.disallowed_deprecation_warnings = []
+          config.active_record.migration_error = :page_load
+          config.active_record.verbose_query_logs = true
+          config.file_watcher = ActiveSupport::EventedFileUpdateChecker
+        end
+      RUBY
+      File.write(@output_path.join('config/environments/development.rb'), dev_env)
+
+      # Create essential empty directories with .keep files
+      %w[log tmp tmp/pids tmp/cache tmp/sockets].each do |dir|
+        FileUtils.mkdir_p(@output_path.join(dir))
+        File.write(@output_path.join(dir, '.keep'), '')
+      end
     end
 
     def setup_testing
@@ -414,18 +847,18 @@ module RailsBddGenerator
           before_action :set_#{entity[:name]}, only: %i[show edit update destroy]
 
           def index
-            @#{entity[:name].pluralize} = current_user.#{entity[:name].pluralize}.page(params[:page])
+            @#{entity[:name].pluralize} = #{entity[:name].capitalize}.all
           end
 
           def show
           end
 
           def new
-            @#{entity[:name]} = current_user.#{entity[:name].pluralize}.build
+            @#{entity[:name]} = #{entity[:name].capitalize}.new
           end
 
           def create
-            @#{entity[:name]} = current_user.#{entity[:name].pluralize}.build(#{entity[:name]}_params)
+            @#{entity[:name]} = #{entity[:name].capitalize}.new(#{entity[:name]}_params)
 
             if @#{entity[:name]}.save
               redirect_to @#{entity[:name]}, notice: '#{entity[:name].capitalize} created successfully.'
@@ -450,7 +883,7 @@ module RailsBddGenerator
           private
 
           def set_#{entity[:name]}
-            @#{entity[:name]} = current_user.#{entity[:name].pluralize}.find(params[:id])
+            @#{entity[:name]} = #{entity[:name].capitalize}.find(params[:id])
           end
 
           def #{entity[:name]}_params
@@ -1285,23 +1718,21 @@ module RailsBddGenerator
     def generate_database_config
       db_config = <<~YAML
         default: &default
-          adapter: postgresql
-          encoding: unicode
+          adapter: sqlite3
           pool: <%= ENV.fetch("RAILS_MAX_THREADS") { 5 } %>
+          timeout: 5000
 
         development:
           <<: *default
-          database: #{app_name}_development
+          database: db/development.sqlite3
 
         test:
           <<: *default
-          database: #{app_name}_test
+          database: db/test.sqlite3
 
         production:
           <<: *default
-          database: #{app_name}_production
-          username: #{app_name}
-          password: <%= ENV['DATABASE_PASSWORD'] %>
+          database: db/production.sqlite3
       YAML
 
       File.write(@output_path.join('config/database.yml'), db_config)

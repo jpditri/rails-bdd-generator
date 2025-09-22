@@ -1,0 +1,176 @@
+  [1m[35m (0.3ms)[0m  [1m[35mCREATE TABLE "schema_migrations" ("version" varchar NOT NULL PRIMARY KEY)[0m
+  [1m[35m (0.1ms)[0m  [1m[35mCREATE TABLE "ar_internal_metadata" ("key" varchar NOT NULL PRIMARY KEY, "value" varchar, "created_at" datetime(6) NOT NULL, "updated_at" datetime(6) NOT NULL)[0m
+  [1m[36mActiveRecord::InternalMetadata Load (0.1ms)[0m  [1m[34mSELECT * FROM "ar_internal_metadata" WHERE "ar_internal_metadata"."key" = ? ORDER BY "ar_internal_metadata"."key" ASC LIMIT 1[0m  [[nil, "environment"]]
+  [1m[36mActiveRecord::InternalMetadata Create (0.2ms)[0m  [1m[32mINSERT INTO "ar_internal_metadata" ("key", "value", "created_at", "updated_at") VALUES ('environment', 'development', '2025-09-22 15:31:05.293836', '2025-09-22 15:31:05.293838') RETURNING "key"[0m
+  [1m[36mActiveRecord::SchemaMigration Load (0.0ms)[0m  [1m[34mSELECT "schema_migrations"."version" FROM "schema_migrations" ORDER BY "schema_migrations"."version" ASC[0m
+Migrating to CreateUsers (20250922082852)
+  [1m[36mTRANSACTION (2.0ms)[0m  [1m[36mBEGIN immediate TRANSACTION[0m
+  [1m[35m (6.5ms)[0m  [1m[35mCREATE TABLE "users" ("id" integer PRIMARY KEY AUTOINCREMENT NOT NULL, "email" varchar, "first_name" varchar, "last_name" varchar, "role" varchar, "created_at" datetime(6) NOT NULL, "updated_at" datetime(6) NOT NULL)[0m
+  [1m[35m (0.1ms)[0m  [1m[35mCREATE INDEX "index_users_on_created_at" ON "users" ("created_at")[0m
+  [1m[36mActiveRecord::SchemaMigration Create (0.6ms)[0m  [1m[32mINSERT INTO "schema_migrations" ("version") VALUES ('20250922082852') RETURNING "version"[0m
+  [1m[36mTRANSACTION (0.1ms)[0m  [1m[36mCOMMIT TRANSACTION[0m
+Migrating to CreateBooks (20250922082853)
+  [1m[36mTRANSACTION (0.0ms)[0m  [1m[36mBEGIN immediate TRANSACTION[0m
+  [1m[35m (0.8ms)[0m  [1m[35mCREATE TABLE "books" ("id" integer PRIMARY KEY AUTOINCREMENT NOT NULL, "title" varchar, "author" varchar, "isbn" varchar, "description" text, "price" decimal, "stock_quantity" integer, "published_at" date, "category" varchar, "active" boolean, "created_at" datetime(6) NOT NULL, "updated_at" datetime(6) NOT NULL)[0m
+  [1m[35m (0.1ms)[0m  [1m[35mCREATE INDEX "index_books_on_created_at" ON "books" ("created_at")[0m
+  [1m[36mActiveRecord::SchemaMigration Create (0.0ms)[0m  [1m[32mINSERT INTO "schema_migrations" ("version") VALUES ('20250922082853') RETURNING "version"[0m
+  [1m[36mTRANSACTION (0.1ms)[0m  [1m[36mCOMMIT TRANSACTION[0m
+Migrating to CreateOrders (20250922082854)
+  [1m[36mTRANSACTION (0.0ms)[0m  [1m[36mBEGIN immediate TRANSACTION[0m
+  [1m[35m (1.1ms)[0m  [1m[35mCREATE TABLE "orders" ("id" integer PRIMARY KEY AUTOINCREMENT NOT NULL, "order_number" varchar, "total_amount" decimal, "status" varchar, "shipping_address" text, "payment_method" varchar, "notes" text, "shipped_at" datetime(6), "created_at" datetime(6) NOT NULL, "updated_at" datetime(6) NOT NULL)[0m
+  [1m[35m (0.0ms)[0m  [1m[35mCREATE INDEX "index_orders_on_created_at" ON "orders" ("created_at")[0m
+  [1m[36mActiveRecord::SchemaMigration Create (0.0ms)[0m  [1m[32mINSERT INTO "schema_migrations" ("version") VALUES ('20250922082854') RETURNING "version"[0m
+  [1m[36mTRANSACTION (0.1ms)[0m  [1m[36mCOMMIT TRANSACTION[0m
+Migrating to CreateOrderItems (20250922082855)
+  [1m[36mActiveRecord::InternalMetadata Load (0.1ms)[0m  [1m[34mSELECT * FROM "ar_internal_metadata" WHERE "ar_internal_metadata"."key" = ? ORDER BY "ar_internal_metadata"."key" ASC LIMIT 1[0m  [[nil, "environment"]]
+  [1m[36mActiveRecord::SchemaMigration Load (0.1ms)[0m  [1m[34mSELECT "schema_migrations"."version" FROM "schema_migrations" ORDER BY "schema_migrations"."version" ASC[0m
+Migrating to CreateOrderItems (20250922082855)
+  [1m[36mTRANSACTION (0.0ms)[0m  [1m[36mBEGIN immediate TRANSACTION[0m
+  [1m[35m (1.0ms)[0m  [1m[35mCREATE TABLE "order_items" ("id" integer PRIMARY KEY AUTOINCREMENT NOT NULL, "quantity" integer, "unit_price" decimal, "subtotal" decimal, "created_at" datetime(6) NOT NULL, "updated_at" datetime(6) NOT NULL)[0m
+  [1m[35m (0.1ms)[0m  [1m[35mCREATE INDEX "index_order_items_on_created_at" ON "order_items" ("created_at")[0m
+  [1m[36mActiveRecord::SchemaMigration Create (0.0ms)[0m  [1m[32mINSERT INTO "schema_migrations" ("version") VALUES ('20250922082855') RETURNING "version"[0m
+  [1m[36mTRANSACTION (0.3ms)[0m  [1m[36mCOMMIT TRANSACTION[0m
+Migrating to CreateReviews (20250922082856)
+  [1m[36mTRANSACTION (0.0ms)[0m  [1m[36mBEGIN immediate TRANSACTION[0m
+  [1m[35m (0.7ms)[0m  [1m[35mCREATE TABLE "reviews" ("id" integer PRIMARY KEY AUTOINCREMENT NOT NULL, "rating" integer, "title" varchar, "content" text, "verified_purchase" boolean, "created_at" datetime(6) NOT NULL, "updated_at" datetime(6) NOT NULL)[0m
+  [1m[35m (0.0ms)[0m  [1m[35mCREATE INDEX "index_reviews_on_created_at" ON "reviews" ("created_at")[0m
+  [1m[36mActiveRecord::SchemaMigration Create (0.2ms)[0m  [1m[32mINSERT INTO "schema_migrations" ("version") VALUES ('20250922082856') RETURNING "version"[0m
+  [1m[36mTRANSACTION (1.8ms)[0m  [1m[36mCOMMIT TRANSACTION[0m
+  [1m[36mActiveRecord::SchemaMigration Load (1.0ms)[0m  [1m[34mSELECT "schema_migrations"."version" FROM "schema_migrations" ORDER BY "schema_migrations"."version" ASC[0m
+  [1m[36mActiveRecord::SchemaMigration Load (0.4ms)[0m  [1m[34mSELECT "schema_migrations"."version" FROM "schema_migrations" ORDER BY "schema_migrations"."version" ASC[0m
+Started HEAD "/books" for ::1 at 2025-09-22 08:32:35 -0700
+  [1m[36mActiveRecord::SchemaMigration Load (0.4ms)[0m  [1m[34mSELECT "schema_migrations"."version" FROM "schema_migrations" ORDER BY "schema_migrations"."version" ASC[0m
+Processing by BooksController#index as */*
+  [1m[36mUser Load (0.1ms)[0m  [1m[34mSELECT "users".* FROM "users" ORDER BY "users"."id" ASC LIMIT ?[0m  [["LIMIT", 1]]
+  ↳ app/controllers/application_controller.rb:11:in 'ApplicationController#set_current_user'
+  [1m[36mTRANSACTION (2.1ms)[0m  [1m[36mBEGIN immediate TRANSACTION[0m
+  ↳ app/controllers/application_controller.rb:15:in 'ApplicationController#create_demo_user'
+  [1m[36mUser Exists? (7.4ms)[0m  [1m[34mSELECT 1 AS one FROM "users" WHERE "users"."email" = ? LIMIT ?[0m  [["email", "demo@example.com"], ["LIMIT", 1]]
+  ↳ app/controllers/application_controller.rb:15:in 'ApplicationController#create_demo_user'
+  [1m[36mUser Create (0.1ms)[0m  [1m[32mINSERT INTO "users" ("email", "first_name", "last_name", "role", "created_at", "updated_at") VALUES (?, ?, ?, ?, ?, ?) RETURNING "id"[0m  [["email", "demo@example.com"], ["first_name", "Demo"], ["last_name", "User"], ["role", "admin"], ["created_at", "2025-09-22 15:32:35.630299"], ["updated_at", "2025-09-22 15:32:35.630299"]]
+  ↳ app/controllers/application_controller.rb:15:in 'ApplicationController#create_demo_user'
+  [1m[36mTRANSACTION (0.3ms)[0m  [1m[36mCOMMIT TRANSACTION[0m
+  ↳ app/controllers/application_controller.rb:15:in 'ApplicationController#create_demo_user'
+  Rendering layout layouts/application.html.erb
+  Rendering books/index.html.erb within layouts/application
+  Rendered books/index.html.erb within layouts/application (Duration: 3.1ms | GC: 0.0ms)
+  Rendered layout layouts/application.html.erb (Duration: 4.3ms | GC: 0.0ms)
+Completed 500 Internal Server Error in 614ms (ActiveRecord: 11.6ms (3 queries, 0 cached) | GC: 72.1ms)
+
+
+  
+ActionView::Template::Error (Missing partial shared/_search with {locale: [:en], formats: [:html, :text, :js, :css, :ics, :csv, :vcf, :vtt, :png, :jpeg, :gif, :bmp, :tiff, :svg, :webp, :mpeg, :mp3, :ogg, :m4a, :webm, :mp4, :otf, :ttf, :woff, :woff2, :xml, :rss, :atom, :yaml, :multipart_form, :url_encoded_form, :json, :pdf, :zip, :gzip], variants: [], handlers: [:raw, :erb, :html, :builder, :ruby]}.
+
+Searched in:
+  * "/Users/jpditri/rails-bdd-generator/demo/app/views"
+  * "/opt/homebrew/lib/ruby/gems/3.4.0/gems/actiontext-8.0.2.1/app/views"
+  * "/opt/homebrew/lib/ruby/gems/3.4.0/gems/actionmailbox-8.0.2.1/app/views"
+)
+Caused by: ActionView::MissingTemplate (Missing partial shared/_search with {locale: [:en], formats: [:html, :text, :js, :css, :ics, :csv, :vcf, :vtt, :png, :jpeg, :gif, :bmp, :tiff, :svg, :webp, :mpeg, :mp3, :ogg, :m4a, :webm, :mp4, :otf, :ttf, :woff, :woff2, :xml, :rss, :atom, :yaml, :multipart_form, :url_encoded_form, :json, :pdf, :zip, :gzip], variants: [], handlers: [:raw, :erb, :html, :builder, :ruby]}.
+
+Searched in:
+  * "/Users/jpditri/rails-bdd-generator/demo/app/views"
+  * "/opt/homebrew/lib/ruby/gems/3.4.0/gems/actiontext-8.0.2.1/app/views"
+  * "/opt/homebrew/lib/ruby/gems/3.4.0/gems/actionmailbox-8.0.2.1/app/views"
+)
+
+Information for: ActionView::Template::Error (Missing partial shared/_search with {locale: [:en], formats: [:html, :text, :js, :css, :ics, :csv, :vcf, :vtt, :png, :jpeg, :gif, :bmp, :tiff, :svg, :webp, :mpeg, :mp3, :ogg, :m4a, :webm, :mp4, :otf, :ttf, :woff, :woff2, :xml, :rss, :atom, :yaml, :multipart_form, :url_encoded_form, :json, :pdf, :zip, :gzip], variants: [], handlers: [:raw, :erb, :html, :builder, :ruby]}.
+
+Searched in:
+  * "/Users/jpditri/rails-bdd-generator/demo/app/views"
+  * "/opt/homebrew/lib/ruby/gems/3.4.0/gems/actiontext-8.0.2.1/app/views"
+  * "/opt/homebrew/lib/ruby/gems/3.4.0/gems/actionmailbox-8.0.2.1/app/views"
+):
+     7:         </div>
+     8:         <div class="card-body">
+     9:           <div style="margin-bottom: 1rem; display: flex; justify-content: space-between; align-items: center;">
+    10:             <%= render 'shared/search' %>
+    11:             <%= link_to 'New Book', new_book_path, class: 'btn btn-primary' %>
+    12:           </div>
+    13: 
+  
+app/views/books/index.html.erb:10
+
+Information for cause: ActionView::MissingTemplate (Missing partial shared/_search with {locale: [:en], formats: [:html, :text, :js, :css, :ics, :csv, :vcf, :vtt, :png, :jpeg, :gif, :bmp, :tiff, :svg, :webp, :mpeg, :mp3, :ogg, :m4a, :webm, :mp4, :otf, :ttf, :woff, :woff2, :xml, :rss, :atom, :yaml, :multipart_form, :url_encoded_form, :json, :pdf, :zip, :gzip], variants: [], handlers: [:raw, :erb, :html, :builder, :ruby]}.
+
+Searched in:
+  * "/Users/jpditri/rails-bdd-generator/demo/app/views"
+  * "/opt/homebrew/lib/ruby/gems/3.4.0/gems/actiontext-8.0.2.1/app/views"
+  * "/opt/homebrew/lib/ruby/gems/3.4.0/gems/actionmailbox-8.0.2.1/app/views"
+):
+  
+app/views/books/index.html.erb:10
+Started HEAD "/books" for ::1 at 2025-09-22 08:32:57 -0700
+Processing by BooksController#index as */*
+  [1m[36mUser Load (1.1ms)[0m  [1m[34mSELECT "users".* FROM "users" ORDER BY "users"."id" ASC LIMIT ?[0m  [["LIMIT", 1]]
+  ↳ app/controllers/application_controller.rb:11:in 'ApplicationController#set_current_user'
+  Rendering layout layouts/application.html.erb
+  Rendering books/index.html.erb within layouts/application
+  Rendered shared/_search.html.erb (Duration: 4.4ms | GC: 0.0ms)
+  [1m[36mBook Load (0.2ms)[0m  [1m[34mSELECT "books".* FROM "books"[0m
+  ↳ app/views/books/index.html.erb:26
+  Rendered books/index.html.erb within layouts/application (Duration: 9.4ms | GC: 0.0ms)
+  Rendered layout layouts/application.html.erb (Duration: 10.0ms | GC: 0.0ms)
+Completed 500 Internal Server Error in 46ms (ActiveRecord: 3.4ms (2 queries, 0 cached) | GC: 0.1ms)
+
+
+  
+ActionView::Template::Error (undefined method 'paginate' for an instance of #<Class:0x000000013047e740>)
+Caused by: NoMethodError (undefined method 'paginate' for an instance of #<Class:0x000000013047e740>)
+
+Information for: ActionView::Template::Error (undefined method 'paginate' for an instance of #<Class:0x000000013047e740>):
+    49:             </table>
+    50:           </div>
+    51: 
+    52:           <%= paginate @books %>
+    53:         </div>
+    54:       </div>
+    55:     </div>
+  
+app/views/books/index.html.erb:52
+
+Information for cause: NoMethodError (undefined method 'paginate' for an instance of #<Class:0x000000013047e740>):
+  
+app/views/books/index.html.erb:52
+Started HEAD "/books" for ::1 at 2025-09-22 08:33:41 -0700
+Processing by BooksController#index as */*
+  [1m[36mUser Load (0.1ms)[0m  [1m[34mSELECT "users".* FROM "users" ORDER BY "users"."id" ASC LIMIT ?[0m  [["LIMIT", 1]]
+  ↳ app/controllers/application_controller.rb:11:in 'ApplicationController#set_current_user'
+  Rendering layout layouts/application.html.erb
+  Rendering books/index.html.erb within layouts/application
+  Rendered shared/_search.html.erb (Duration: 2.2ms | GC: 0.0ms)
+  [1m[36mBook Load (0.1ms)[0m  [1m[34mSELECT "books".* FROM "books"[0m
+  ↳ app/views/books/index.html.erb:26
+  Rendered books/index.html.erb within layouts/application (Duration: 10.7ms | GC: 0.0ms)
+  Rendered layout layouts/application.html.erb (Duration: 14.5ms | GC: 0.0ms)
+Completed 200 OK in 48ms (Views: 15.4ms | ActiveRecord: 1.9ms (2 queries, 0 cached) | GC: 0.0ms)
+
+
+Started GET "/books" for ::1 at 2025-09-22 08:33:48 -0700
+Processing by BooksController#index as */*
+  [1m[36mUser Load (0.9ms)[0m  [1m[34mSELECT "users".* FROM "users" ORDER BY "users"."id" ASC LIMIT ?[0m  [["LIMIT", 1]]
+  ↳ app/controllers/application_controller.rb:11:in 'ApplicationController#set_current_user'
+  Rendering layout layouts/application.html.erb
+  Rendering books/index.html.erb within layouts/application
+  Rendered shared/_search.html.erb (Duration: 1.2ms | GC: 0.0ms)
+  [1m[36mBook Load (0.3ms)[0m  [1m[34mSELECT "books".* FROM "books"[0m
+  ↳ app/views/books/index.html.erb:26
+  Rendered books/index.html.erb within layouts/application (Duration: 6.2ms | GC: 0.0ms)
+  Rendered layout layouts/application.html.erb (Duration: 7.4ms | GC: 0.0ms)
+Completed 200 OK in 16ms (Views: 7.3ms | ActiveRecord: 0.6ms (2 queries, 0 cached) | GC: 0.0ms)
+
+
+Started GET "/books" for ::1 at 2025-09-22 08:33:56 -0700
+Processing by BooksController#index as HTML
+  [1m[36mUser Load (0.4ms)[0m  [1m[34mSELECT "users".* FROM "users" ORDER BY "users"."id" ASC LIMIT ?[0m  [["LIMIT", 1]]
+  ↳ app/controllers/application_controller.rb:11:in 'ApplicationController#set_current_user'
+  Rendering layout layouts/application.html.erb
+  Rendering books/index.html.erb within layouts/application
+  Rendered shared/_search.html.erb (Duration: 0.9ms | GC: 0.0ms)
+  [1m[36mBook Load (0.0ms)[0m  [1m[34mSELECT "books".* FROM "books"[0m
+  ↳ app/views/books/index.html.erb:26
+  Rendered books/index.html.erb within layouts/application (Duration: 3.2ms | GC: 0.5ms)
+  Rendered layout layouts/application.html.erb (Duration: 4.0ms | GC: 0.5ms)
+Completed 200 OK in 6ms (Views: 4.3ms | ActiveRecord: 0.4ms (2 queries, 0 cached) | GC: 0.5ms)
+
+
