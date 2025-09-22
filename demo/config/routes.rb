@@ -5,18 +5,11 @@ Rails.application.routes.draw do
 
   root 'home#index'
 
-  resources :books
-  resources :orders
-  resources :order_items
-  resources :reviews
+  
 
   namespace :api do
     namespace :v1 do
       resources :users
-      resources :books
-      resources :orders
-      resources :order_items
-      resources :reviews
     end
   end
 end

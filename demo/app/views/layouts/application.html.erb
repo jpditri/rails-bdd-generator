@@ -3,66 +3,52 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title><%= content_for?(:title) ? yield(:title) : "BookStore" %></title>
+  <title><%= content_for?(:title) ? yield(:title) : "Rails App" %></title>
 
   <!-- Font Loading -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Merriweather:wght@300;400;700&display=swap" rel="stylesheet">
 
   <%= csrf_meta_tags %>
   <%= csp_meta_tag %>
 
   <style>
-    /* Basic styling for demo purposes */
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-    }
-
+    /* Professional styling for Rails BDD Generator demos */
     body {
       font-family: 'Merriweather', Georgia, serif;
-      line-height: 1.6;
-      color: #333;
       background-color: #f5f5f5;
-    }
-
-    .container {
-      max-width: 1200px;
-      margin: 0 auto;
-      padding: 0 20px;
+      margin: 0;
+      padding: 0;
+      line-height: 1.6;
     }
 
     .navbar {
       background: #2c3e50;
       color: white;
       padding: 1rem 0;
-      margin-bottom: 2rem;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+
+    .navbar .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 0 1rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
     }
 
     .navbar-brand {
+      font-size: 1.5rem;
+      font-weight: bold;
       color: white;
       text-decoration: none;
-      font-size: 1.5rem;
-      font-weight: 700;
     }
 
-    .navbar-nav {
-      list-style: none;
-      display: flex;
-      gap: 1rem;
-      margin-top: 0.5rem;
-    }
-
-    .navbar-nav li a {
-      color: #ecf0f1;
-      text-decoration: none;
-      padding: 0.5rem;
-    }
-
-    .navbar-nav li a:hover {
-      color: #3498db;
+    .container {
+      max-width: 1200px;
+      margin: 2rem auto;
+      padding: 0 1rem;
     }
 
     .card {
@@ -70,28 +56,31 @@
       border-radius: 8px;
       box-shadow: 0 2px 10px rgba(0,0,0,0.1);
       margin-bottom: 2rem;
+      overflow: hidden;
     }
 
     .card-header {
       background: #34495e;
       color: white;
-      padding: 1rem;
-      border-radius: 8px 8px 0 0;
+      padding: 1.5rem;
+      border-bottom: 1px solid #ecf0f1;
     }
 
     .card-body {
-      padding: 1.5rem;
+      padding: 2rem;
     }
 
     .btn {
       display: inline-block;
-      padding: 0.5rem 1rem;
+      padding: 0.75rem 1.5rem;
       background: #3498db;
       color: white;
       text-decoration: none;
       border-radius: 4px;
       border: none;
       cursor: pointer;
+      font-size: 1rem;
+      transition: background-color 0.3s;
     }
 
     .btn:hover {
@@ -102,100 +91,80 @@
       background: #3498db;
     }
 
-    .btn-secondary {
-      background: #95a5a6;
+    .btn-primary:hover {
+      background: #2980b9;
     }
 
-    .btn-danger {
-      background: #e74c3c;
+    .lead {
+      font-size: 1.25rem;
+      font-weight: 300;
+      margin-bottom: 1.5rem;
+      color: #7f8c8d;
     }
 
-    .btn-sm {
-      padding: 0.25rem 0.5rem;
-      font-size: 0.875rem;
-    }
-
-    .table {
-      width: 100%;
-      border-collapse: collapse;
-      margin-top: 1rem;
-    }
-
-    .table th,
-    .table td {
-      padding: 0.75rem;
-      text-align: left;
-      border-bottom: 1px solid #ddd;
-    }
-
-    .table th {
-      background: #f8f9fa;
-      font-weight: 600;
-    }
-
-    .search-form {
+    .row {
       display: flex;
-      gap: 0.5rem;
-      margin-bottom: 1rem;
+      margin: -0.5rem;
     }
 
-    .search-form input {
-      flex: 1;
+    .col-12 {
+      flex: 0 0 100%;
       padding: 0.5rem;
-      border: 1px solid #ddd;
-      border-radius: 4px;
     }
 
-    .text-muted {
-      color: #6c757d;
+    .col-md-6 {
+      flex: 0 0 50%;
+      padding: 0.5rem;
     }
 
-    .alert {
-      padding: 0.75rem 1rem;
-      margin-bottom: 1rem;
-      border-radius: 4px;
+    @media (max-width: 768px) {
+      .col-md-6 {
+        flex: 0 0 100%;
+      }
     }
 
-    .alert-success {
-      background: #d4edda;
-      color: #155724;
-      border: 1px solid #c3e6cb;
+    h1, h2, h3 {
+      color: #2c3e50;
+      margin-top: 0;
     }
 
-    .alert-danger {
-      background: #f8d7da;
-      color: #721c24;
-      border: 1px solid #f5c6cb;
+    ul {
+      padding-left: 1.5rem;
+    }
+
+    li {
+      margin-bottom: 0.5rem;
+    }
+
+    footer {
+      background: #34495e;
+      color: white;
+      padding: 2rem 0;
+      margin-top: 3rem;
+      text-align: center;
+    }
+
+    footer p {
+      margin: 0.5rem 0;
     }
   </style>
 </head>
 <body>
   <nav class="navbar">
     <div class="container">
-      <%= link_to "BookStore", root_path, class: "navbar-brand" %>
-
-      <ul class="navbar-nav">
-        <% if defined?(books_path) %>
-          <li>
-            <%= link_to "Books", books_path %>
-          </li>
-        <% end %>
-        <% if defined?(orders_path) %>
-          <li>
-            <%= link_to "Orders", orders_path %>
-          </li>
-        <% end %>
-        <% if current_user.present? %>
-          <li>
-            <span class="text-muted">Demo User: <%= current_user.email %></span>
-          </li>
-        <% end %>
-      </ul>
+      <%= link_to "Rails App", root_path, class: "navbar-brand" %>
     </div>
   </nav>
 
-  <main class="container">
+  <main>
     <%= yield %>
   </main>
+
+  <footer>
+    <div class="container">
+      <p>&copy; <%= Date.current.year %> Rails App. All rights reserved.</p>
+      <p style="opacity: 0.8; font-size: 0.875rem;">Generated with Rails BDD Generator</p>
+    </div>
+  </footer>
 </body>
 </html>
