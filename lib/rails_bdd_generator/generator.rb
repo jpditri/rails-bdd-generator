@@ -828,7 +828,7 @@ module RailsBddGenerator
 
     def generate_model(entity)
       model_content = <<~RUBY
-        class #{entity[:name].camelize} < ApplicationRecord
+        class #{entity[:name].classify} < ApplicationRecord
           #{generate_associations(entity)}
           #{generate_validations(entity)}
           #{generate_scopes(entity)}
@@ -904,23 +904,23 @@ module RailsBddGenerator
 
     def generate_controller(entity)
       controller_content = <<~RUBY
-        class #{entity[:name].pluralize.camelize}Controller < ApplicationController
+        class #{entity[:name].pluralize.classify}Controller < ApplicationController
           before_action :require_authentication  # Rails 8 built-in auth
           before_action :set_#{entity[:name]}, only: %i[show edit update destroy]
 
           def index
-            @#{entity[:name].pluralize} = #{entity[:name].camelize}.all
+            @#{entity[:name].pluralize} = #{entity[:name].classify}.all
           end
 
           def show
           end
 
           def new
-            @#{entity[:name]} = #{entity[:name].camelize}.new
+            @#{entity[:name]} = #{entity[:name].classify}.new
           end
 
           def create
-            @#{entity[:name]} = #{entity[:name].camelize}.new(#{entity[:name]}_params)
+            @#{entity[:name]} = #{entity[:name].classify}.new(#{entity[:name]}_params)
 
             if @#{entity[:name]}.save
               redirect_to @#{entity[:name]}, notice: '#{entity[:name].capitalize} created successfully.'
@@ -945,7 +945,7 @@ module RailsBddGenerator
           private
 
           def set_#{entity[:name]}
-            @#{entity[:name]} = #{entity[:name].camelize}.find(params[:id])
+            @#{entity[:name]} = #{entity[:name].classify}.find(params[:id])
           end
 
           def #{entity[:name]}_params
@@ -1270,7 +1270,7 @@ module RailsBddGenerator
 
     def generate_migration(entity, timestamp)
       migration_content = <<~RUBY
-        class Create#{entity[:name].pluralize.camelize} < ActiveRecord::Migration[7.1]
+        class Create#{entity[:name].pluralize.classify} < ActiveRecord::Migration[7.1]
           def change
             create_table :#{entity[:name].pluralize} do |t|
               #{generate_migration_columns(entity)}
@@ -1479,7 +1479,7 @@ module RailsBddGenerator
       spec_content = <<~RUBY
         require 'rails_helper'
 
-        RSpec.describe #{entity[:name].pluralize.camelize}Controller, type: :controller do
+        RSpec.describe #{entity[:name].pluralize.classify}Controller, type: :controller do
           let(:user) { create(:user) }
           let(:#{entity[:name]}) { create(:#{entity[:name]}, user: user) }
 
@@ -1564,7 +1564,7 @@ module RailsBddGenerator
       api_controller = <<~RUBY
         module Api
           module V1
-            class #{entity[:name].pluralize.camelize}Controller < Api::V1::BaseController
+            class #{entity[:name].pluralize.classify}Controller < Api::V1::BaseController
               before_action :set_#{entity[:name]}, only: %i[show update destroy]
 
               def index
