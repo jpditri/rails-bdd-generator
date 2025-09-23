@@ -10,6 +10,13 @@ gem 'rack-cors'
 gem 'active_model_serializers', '~> 0.10'
 gem 'bootsnap', require: false
 
+# Asset pipeline
+gem 'sprockets-rails'
+gem 'sassc-rails'
+gem 'importmap-rails'
+gem 'stimulus-rails'
+gem 'turbo-rails'
+
 group :development, :test do
   gem 'rspec-rails', '~> 6.0'
   gem 'factory_bot_rails'
@@ -34,14 +41,4 @@ end
 group :development do
   gem 'listen'
   gem 'spring'
-end
-
-# Code quality tools
-group :development do
-  gem 'rubocop', require: false
-  gem 'rubocop-rails', require: false
-  gem 'rubocop-rspec', require: false
-  gem 'brakeman', require: false  # Security scanner
-  gem 'bundler-audit', require: false  # Dependency scanner
-  gem 'rails_best_practices', require: false
 end

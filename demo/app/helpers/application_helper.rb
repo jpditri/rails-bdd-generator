@@ -1,18 +1,20 @@
 module ApplicationHelper
-  def flash_class(type)
-    case type.to_sym
-    when :notice, :success then 'success'
-    when :alert, :error then 'danger'
-    when :warning then 'warning'
-    else 'info'
-    end
-  end
-
   def format_currency(amount)
-    number_to_currency(amount)
+    return "N/A" unless amount
+    "$" + sprintf('%.2f', amount)
   end
 
   def format_date(date)
-    date.strftime("%B %d, %Y") if date
+    return "N/A" unless date
+    date.strftime("%B %d, %Y")
+  end
+
+  def truncate_with_tooltip(text, length: 50)
+    return "N/A" unless text
+    if text.length > length
+      content_tag :span, truncate(text, length: length), title: text
+    else
+      text
+    end
   end
 end

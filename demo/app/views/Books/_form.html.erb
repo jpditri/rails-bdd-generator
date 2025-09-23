@@ -1,0 +1,40 @@
+<%= form_with(model: Book, local: true) do |form| %>
+  <% if Book.errors.any? %>
+    <div class="alert alert-danger">
+      <ul>
+        <% Book.errors.full_messages.each do |message| %>
+          <li><%= message %></li>
+        <% end %>
+      </ul>
+    </div>
+  <% end %>
+
+  <div class="field">
+  <%= form.label :title %>
+  <%= form.text_field :title, class: 'form-control' %>
+</div>
+  <div class="field">
+  <%= form.label :description %>
+  <%= form.text_area :description, class: 'form-control' %>
+</div>
+  <div class="field">
+  <%= form.label :isbn %>
+  <%= form.text_field :isbn, class: 'form-control' %>
+</div>
+  <div class="field">
+  <%= form.label :publication_date %>
+  <%= form.date_field :publication_date, class: 'form-control' %>
+</div>
+  <div class="field">
+  <%= form.label :price %>
+  <%= form.number_field :price, class: 'form-control' %>
+</div>
+  <div class="field">
+  <%= form.label :stock_quantity %>
+  <%= form.number_field :stock_quantity, class: 'form-control' %>
+</div>
+
+  <div class="actions">
+    <%= form.submit class: 'btn btn-primary' %>
+  </div>
+<% end %>

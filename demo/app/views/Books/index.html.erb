@@ -1,0 +1,65 @@
+<div class="container">
+  <div class="row">
+    <div class="col-12">
+      <div class="card">
+        <div class="card-header">
+          <h1 style="margin: 0;">Books</h1>
+        </div>
+        <div class="card-body">
+          <div style="margin-bottom: 1rem; display: flex; justify-content: space-between; align-items: center;">
+            <%= render 'shared/search' %>
+            <%= link_to new_Book_path, class: 'btn btn-primary' do %>
+              <%= plus_icon %> New Book
+            <% end %>
+          </div>
+
+          <div class="table-responsive">
+            <table class="table">
+              <thead>
+                <tr>
+                  <th>Title</th>
+                          <th>Description</th>
+                          <th>Isbn</th>
+                          <th>Publication date</th>
+                  <th style="text-align: right;">Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                <% @Books.each do |Book| %>
+                  <tr class="Book-row">
+                    <td><%= truncate(Book.title.to_s, length: 50) %></td>
+                            <td><%= truncate(Book.description.to_s, length: 50) %></td>
+                            <td><%= truncate(Book.isbn.to_s, length: 50) %></td>
+                            <td><%= format_date(Book.publication_date) %></td>
+                    <td style="text-align: right;">
+                      <%= link_to Book, class: 'btn btn-sm btn-outline' do %>
+                        <%= view_icon %> View
+                      <% end %>
+                      <%= link_to edit_Book_path(Book), class: 'btn btn-sm btn-secondary' do %>
+                        <%= edit_icon %> Edit
+                      <% end %>
+                      <%= link_to Book, method: :delete,
+                          data: { confirm: 'Are you sure?' },
+                          class: 'btn btn-sm btn-danger' do %>
+                        <%= delete_icon %> Delete
+                      <% end %>
+                    </td>
+                  </tr>
+                <% end %>
+                <% if @Books.empty? %>
+                  <tr>
+                    <td colspan="5" style="text-align: center; padding: 2rem; color: var(--muted);">
+                      No Books found. <%= link_to 'Create one now', new_Book_path %>.
+                    </td>
+                  </tr>
+                <% end %>
+              </tbody>
+            </table>
+          </div>
+
+          <%= paginate @Books %>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
