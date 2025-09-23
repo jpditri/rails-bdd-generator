@@ -22,9 +22,13 @@ module RailsBddGenerator
       @tests = []
       @llm_designer = nil
 
-      # Initialize LLM designer if API key is available
-      if ENV['ANTHROPIC_API_KEY']
+      # Always initialize LLM designer - it will handle API key validation internally
+      begin
         @llm_designer = LLMDesigner.new
+      rescue => e
+        puts "  ! LLM designer unavailable: #{e.message}"
+        puts "  → Falling back to pattern-based extraction..."
+        @llm_designer = nil
       end
     end
 
@@ -74,7 +78,7 @@ module RailsBddGenerator
         elsif spec.start_with?('{')
           JSON.parse(spec)
         else
-          { description: spec }
+          { 'description' => spec }
         end
       else
         raise ArgumentError, "Invalid specification format"
@@ -137,14 +141,38 @@ module RailsBddGenerator
     def auto_detect_entities(description)
       entities = []
 
-      # Common entity patterns
-      patterns = [
-        /(?:manage|track|store)\s+(\w+)/i,
-        /(\w+)\s+(?:management|tracking|collection)/i
+      # First, try to extract comma-separated entities from common patterns
+      comma_patterns = [
+        /\bwith\s+([a-z, ]+(?:\s+and\s+[a-z]+)?)/i,  # "with books, authors, and categories"
+        /\bincluding\s+([a-z, ]+(?:\s+and\s+[a-z]+)?)/i,  # "including products, orders"
+        /\bfor\s+([a-z, ]+(?:\s+and\s+[a-z]+)?)/i,  # "for books, users"
       ]
 
-      patterns.each do |pattern|
-        description.scan(pattern) { |match| entities << normalize_entity(match[0]) }
+      comma_patterns.each do |pattern|
+        description.scan(pattern) do |match|
+          if match[0]
+            # Parse comma-separated and "and" separated lists
+            # Handle "books, authors, and categories" pattern
+            full_list = match[0].gsub(/,?\s+and\s+/, ', ')  # Convert "and" to comma
+            items = full_list.split(/,\s*/).map(&:strip)
+            items.each { |item| entities << normalize_entity(item) unless item.empty? }
+          end
+        end
+      end
+
+      # If no comma-separated entities found, try individual patterns
+      if entities.empty?
+        patterns = [
+          /(?:manage|track|store)\s+(\w+)/i,
+          /(\w+)\s+(?:management|tracking|collection)/i,
+          /\b([a-z]+)\s+(?:system|application|app|platform)\b/i  # "book system", "user application"
+        ]
+
+        patterns.each do |pattern|
+          description.scan(pattern) do |match|
+            entities << normalize_entity(match[0])
+          end
+        end
       end
 
       entities.uniq { |e| e[:name] }
@@ -154,6 +182,7 @@ module RailsBddGenerator
       {
         name: :string,
         description: :text,
+        price: :decimal,
         status: :string,
         active: :boolean
       }

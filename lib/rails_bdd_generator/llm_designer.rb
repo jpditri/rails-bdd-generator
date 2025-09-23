@@ -8,7 +8,9 @@ module RailsBddGenerator
 
     def initialize(api_key = nil)
       @api_key = api_key || ENV['ANTHROPIC_API_KEY']
-      raise "ANTHROPIC_API_KEY environment variable not set" unless @api_key
+      unless @api_key
+        raise "ANTHROPIC_API_KEY environment variable not set. Please set your API key or the generator will use pattern-based extraction."
+      end
     end
 
     def design_application(description)
