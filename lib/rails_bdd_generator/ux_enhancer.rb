@@ -300,7 +300,8 @@ module RailsBddGenerator
             color: white;
 
             &:hover {
-              background: darken(var(--primary), 10%);
+              background: var(--primary);
+              filter: brightness(0.9);
               transform: translateY(-2px);
               box-shadow: var(--shadow-md);
             }
@@ -311,7 +312,8 @@ module RailsBddGenerator
             color: white;
 
             &:hover {
-              background: darken(var(--secondary), 10%);
+              background: var(--secondary);
+              filter: brightness(0.9);
             }
           }
 
@@ -587,7 +589,8 @@ module RailsBddGenerator
             transition: all 0.3s ease;
 
             &:hover {
-              background: darken(var(--primary), 10%);
+              background: var(--primary);
+              filter: brightness(0.9);
             }
           }
         }
@@ -1209,7 +1212,6 @@ module RailsBddGenerator
           //= link_tree ../images
           //= link_directory ../stylesheets .css
           //= link_tree ../../javascript .js
-          //= link_tree ../../../vendor/javascript .js
         JS
       }
     end

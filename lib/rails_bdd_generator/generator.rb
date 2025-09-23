@@ -218,6 +218,13 @@ module RailsBddGenerator
         gem 'active_model_serializers', '~> 0.10'
         gem 'bootsnap', require: false
 
+        # Asset pipeline
+        gem 'sprockets-rails'
+        gem 'sassc-rails'
+        gem 'importmap-rails'
+        gem 'stimulus-rails'
+        gem 'turbo-rails'
+
         group :development, :test do
           gem 'rspec-rails', '~> 6.0'
           gem 'factory_bot_rails'
@@ -252,6 +259,7 @@ module RailsBddGenerator
       dirs = %w[
         app/controllers app/models app/views app/views/layouts app/views/shared app/helpers app/services app/serializers
         app/controllers/api app/controllers/api/v1
+        app/javascript/controllers
         config/initializers config/environments
         db/migrate
         features/step_definitions features/support
@@ -717,6 +725,18 @@ module RailsBddGenerator
         end
       RUBY
       File.write(@output_path.join('config/environments/development.rb'), dev_env)
+
+      # config/importmap.rb
+      importmap_config = <<~RUBY
+        # Pin npm packages by running ./bin/importmap
+
+        pin "application"
+        pin "@hotwired/turbo-rails", to: "turbo.min.js"
+        pin "@hotwired/stimulus", to: "stimulus.min.js"
+        pin "@hotwired/stimulus-loading", to: "stimulus-loading.js"
+        pin_all_from "app/javascript/controllers", under: "controllers"
+      RUBY
+      File.write(@output_path.join('config/importmap.rb'), importmap_config)
 
       # Create essential empty directories with .keep files
       %w[log tmp tmp/pids tmp/cache tmp/sockets].each do |dir|
