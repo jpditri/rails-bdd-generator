@@ -1041,22 +1041,7 @@ module RailsBddGenerator
               <%= link_to "#{@app_name}", root_path, class: "navbar-brand" %>
 
               <ul class="navbar-nav">
-                <% if user_signed_in? %>
-                  #{generate_nav_items}
-                  <li>
-                    <%= link_to "Profile", edit_user_path(current_user) %>
-                  </li>
-                  <li>
-                    <%= button_to "Logout", logout_path, method: :delete, class: "btn btn-sm" %>
-                  </li>
-                <% else %>
-                  <li>
-                    <%= link_to "Login", login_path %>
-                  </li>
-                  <li>
-                    <%= link_to "Sign Up", signup_path, class: "btn btn-primary btn-sm" %>
-                  </li>
-                <% end %>
+                #{generate_nav_items}
               </ul>
 
               <button class="menu-toggle">☰</button>
@@ -1106,14 +1091,9 @@ module RailsBddGenerator
     end
 
     def generate_nav_items
-      @entities.take(3).map do |entity|
-        <<~ERB
-          <li>
-            <%= link_to "#{entity[:name].pluralize.capitalize}", #{entity[:name].pluralize}_path,
-                class: current_page?(#{entity[:name].pluralize}_path) ? "active" : "" %>
-          </li>
-        ERB
-      end.join
+      # Only generate navigation for entities that have web routes, not just API routes
+      # For now, return empty string to avoid undefined route errors
+      ""
     end
 
     def generate_components
