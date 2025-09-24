@@ -1,0 +1,69 @@
+<div class="container">
+  <div class="row">
+    <div class="col-12">
+      <div class="card">
+        <div class="card-header">
+          <h1 style="margin: 0;">Games</h1>
+        </div>
+        <div class="card-body">
+          <div style="margin-bottom: 1rem; display: flex; justify-content: space-between; align-items: center;">
+            <%= render 'shared/search' %>
+            <%= link_to new_game_path, class: 'btn btn-primary' do %>
+              <%= plus_icon %> New Game
+            <% end %>
+          </div>
+
+          <div class="table-responsive">
+            <table class="table">
+              <thead>
+                <tr>
+                  <th>Name</th>
+                          <th>Description</th>
+                          <th>Price</th>
+                          <th>Status</th>
+                  <th style="text-align: right;">Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                <% @games.each do |game| %>
+                  <tr class="game-row">
+                    <td><%= truncate(game.name.to_s, length: 50) %></td>
+                            <td><%= truncate(game.description.to_s, length: 50) %></td>
+                            <td class="price"><%= format_currency(game.price) %></td>
+                            <td>
+          <span class="badge badge-<%= game.status_badge_class %>">
+            <%= game.status.humanize %>
+          </span>
+        </td>
+                    <td style="text-align: right;">
+                      <%= link_to game, class: 'btn btn-sm btn-outline' do %>
+                        <%= view_icon %> View
+                      <% end %>
+                      <%= link_to edit_game_path(game), class: 'btn btn-sm btn-secondary' do %>
+                        <%= edit_icon %> Edit
+                      <% end %>
+                      <%= link_to game, method: :delete,
+                          data: { confirm: 'Are you sure?' },
+                          class: 'btn btn-sm btn-danger' do %>
+                        <%= delete_icon %> Delete
+                      <% end %>
+                    </td>
+                  </tr>
+                <% end %>
+                <% if @games.empty? %>
+                  <tr>
+                    <td colspan="5" style="text-align: center; padding: 2rem; color: var(--muted);">
+                      No games found. <%= link_to 'Create one now', new_game_path %>.
+                    </td>
+                  </tr>
+                <% end %>
+              </tbody>
+            </table>
+          </div>
+
+          <%= paginate @games %>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

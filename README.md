@@ -181,14 +181,10 @@ Check out the [demo folder](demo/) to see a complete example of what gets genera
 
 ### 📸 **Live Screenshots**
 
-#### Desktop View - Professional dashboard with feature showcase
-![Desktop Dashboard](screenshots/books-index.png)
+#### Working Rails BDD Generated Application
+![Rails BDD Demo Application](screenshots/rails-app-working.png)
 
-#### Responsive Design - Mobile and tablet optimized layouts
-![Mobile View](screenshots/dashboard-mobile.png)
-
-#### Complete UX Package - Modern styling with animations and interactions
-![Tablet View](screenshots/dashboard-tablet.png)
+*Complete Rails application generated with modern styling, user management, and professional UX design.*
 
 ### 🎨 **Professional UX Design**
 - **Modern theme** with professional blue color scheme (#0066CC primary)

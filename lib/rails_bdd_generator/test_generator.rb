@@ -31,7 +31,7 @@ module RailsBddGenerator
 
         require 'rails_helper'
 
-        RSpec.describe #{entity[:name].capitalize}, type: :model do
+        RSpec.describe #{entity[:name].camelize}, type: :model do
           subject(:#{entity[:name]}) { build(:#{entity[:name]}) }
 
           describe 'associations' do

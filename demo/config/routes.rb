@@ -5,16 +5,18 @@ Rails.application.routes.draw do
 
   root 'home#index'
 
-  resources :Books
-  resources :Authors
-  resources :Categories
+  resources :cards
+  resources :decks
+  resources :players
+  resources :games
 
   namespace :api do
     namespace :v1 do
       resources :users
-      resources :Books
-      resources :Authors
-      resources :Categories
+      resources :cards
+      resources :decks
+      resources :players
+      resources :games
     end
   end
 end

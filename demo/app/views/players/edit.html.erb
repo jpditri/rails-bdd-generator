@@ -1,0 +1,18 @@
+<div class="container">
+  <div class="card">
+    <div class="card-header">
+      <h1 style="margin: 0;">Edit Player</h1>
+    </div>
+    <div class="card-body">
+      <%= render 'form', player: @player %>
+    </div>
+    <div class="card-footer">
+      <%= link_to @player, class: 'btn btn-outline' do %>
+        <%= view_icon %> View
+      <% end %>
+      <%= link_to players_path, class: 'btn btn-secondary' do %>
+        <%= list_icon %> Back to List
+      <% end %>
+    </div>
+  </div>
+</div>

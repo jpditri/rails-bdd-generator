@@ -1,0 +1,55 @@
+<div class="container">
+  <div class="card">
+    <div class="card-header">
+      <h1 style="margin: 0;">Card Details</h1>
+    </div>
+    <div class="card-body">
+      <div class="row">
+        <div class="col-md-6" style="margin-bottom: 1rem;">
+  <strong>Name:</strong>
+      <%= @card.name %>    </div>
+                <div class="col-12" style="margin-bottom: 1rem;">
+  <strong>Description:</strong>
+  <div style="margin-top: 0.5rem;">
+    <%= simple_format(@card.description) %>
+  </div>
+    </div>
+                <div class="col-md-6" style="margin-bottom: 1rem;">
+  <strong>Price:</strong>
+      <span class="price"><%= format_currency(@card.price) %></span>    </div>
+                <div class="col-md-6" style="margin-bottom: 1rem;">
+  <strong>Status:</strong>
+      <%= @card.status %>    </div>
+                <div class="col-md-6" style="margin-bottom: 1rem;">
+  <strong>Active:</strong>
+<% if @card.active %>
+  <span class="badge badge-success">Yes</span>
+<% else %>
+  <span class="badge badge-danger">No</span>
+<% end %>
+    </div>
+      </div>
+    </div>
+    <div class="card-footer">
+      <%= link_to edit_card_path(@card), class: 'btn btn-primary' do %>
+        <%= edit_icon %> Edit
+      <% end %>
+      <%= link_to card_path(@card), method: :delete,
+          data: { confirm: 'Are you sure?' }, class: 'btn btn-danger' do %>
+        <%= delete_icon %> Delete
+      <% end %>
+      <%= link_to cards_path, class: 'btn btn-secondary' do %>
+        <%= list_icon %> Back to List
+      <% end %>
+    </div>
+  </div>
+
+  <% if @card.respond_to?(:reviews) && @card.reviews.any? %>
+    <div class="card" style="margin-top: 1rem;">
+      <div class="card-header">Reviews</div>
+      <div class="card-body">
+        <%= render @card.reviews %>
+      </div>
+    </div>
+  <% end %>
+</div>

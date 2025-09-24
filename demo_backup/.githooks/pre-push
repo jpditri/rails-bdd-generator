@@ -1,0 +1,74 @@
+#!/bin/bash
+# Pre-push hook to ensure deployment readiness
+
+set -e
+
+echo "🚀 Running pre-push deployment checks..."
+
+# 1. Check for pending migrations
+echo "Checking for pending migrations..."
+if command -v rails >/dev/null 2>&1; then
+  pending=$(bundle exec rails db:migrate:status 2>/dev/null | grep "down" || true)
+  if [ -n "$pending" ]; then
+    echo "❌ Pending migrations detected!"
+    echo "$pending"
+    echo "Run 'bundle exec rails db:migrate' before pushing."
+    exit 1
+  fi
+  echo "✅ No pending migrations"
+fi
+
+# 2. Run full test suite (optional - can be slow)
+if [ "$RUN_TESTS_ON_PUSH" = "true" ]; then
+  echo "Running test suite..."
+  if ! bundle exec rspec --format progress; then
+    echo "❌ Tests are failing!"
+    echo "Fix all tests before pushing."
+    exit 1
+  fi
+  echo "✅ All tests passing"
+else
+  echo "ℹ️  Skipping test suite (set RUN_TESTS_ON_PUSH=true to enable)"
+fi
+
+# 3. Check for unresolved merge conflicts
+echo "Checking for merge conflicts..."
+conflicts=$(git diff --name-only --diff-filter=U)
+if [ -n "$conflicts" ]; then
+  echo "❌ Unresolved merge conflicts found:"
+  echo "$conflicts"
+  exit 1
+fi
+
+# 4. Verify no broken symbolic links
+echo "Checking for broken symlinks..."
+broken_links=$(find . -type l ! -exec test -e {} \; -print 2>/dev/null || true)
+if [ -n "$broken_links" ]; then
+  echo "⚠️  Warning: Broken symbolic links found:"
+  echo "$broken_links"
+fi
+
+# 5. Check bundle is up to date
+echo "Checking Gemfile.lock is up to date..."
+if [ -f "Gemfile" ]; then
+  if ! bundle check > /dev/null 2>&1; then
+    echo "❌ Bundle is not up to date!"
+    echo "Run 'bundle install' and commit the changes."
+    exit 1
+  fi
+  echo "✅ Bundle is up to date"
+fi
+
+# 6. Lint checking (if rubocop is available)
+if command -v rubocop >/dev/null 2>&1; then
+  echo "Running RuboCop..."
+  if ! bundle exec rubocop --format quiet; then
+    echo "⚠️  RuboCop violations detected (non-blocking)"
+    echo "Consider fixing linting issues."
+  else
+    echo "✅ RuboCop checks passed"
+  fi
+fi
+
+echo "✅ All pre-push checks passed! Ready to deploy."
+exit 0

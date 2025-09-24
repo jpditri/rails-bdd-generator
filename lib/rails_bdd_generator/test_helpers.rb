@@ -76,10 +76,7 @@ module RailsBddGenerator
           Capybara.default_max_wait_time = 5
           Capybara.server = :puma, { Silent: true }
 
-          # Retry flaky tests
-          config.retry_mutant = 3
-          config.verbose_retry = true
-          config.display_try_failure_messages = true
+          # RSpec retry configuration removed - retry_mutant is not a valid RSpec option
 
           # Set up test data
           config.before(:each) do

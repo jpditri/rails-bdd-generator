@@ -129,7 +129,12 @@ module RailsBddGenerator
 
     def normalize_entity(entity)
       if entity.is_a?(Hash)
-        entity.deep_symbolize_keys
+        normalized = entity.deep_symbolize_keys
+        # Ensure entity name follows Rails conventions (lowercase, singular)
+        if normalized[:name]
+          normalized[:name] = normalized[:name].to_s.downcase.singularize
+        end
+        normalized
       else
         {
           name: entity.to_s.downcase.singularize,
@@ -904,7 +909,7 @@ module RailsBddGenerator
 
     def generate_controller(entity)
       controller_content = <<~RUBY
-        class #{entity[:name].pluralize.classify}Controller < ApplicationController
+        class #{entity[:name].pluralize.camelize}Controller < ApplicationController
           before_action :require_authentication  # Rails 8 built-in auth
           before_action :set_#{entity[:name]}, only: %i[show edit update destroy]
 
@@ -970,6 +975,7 @@ module RailsBddGenerator
       end
 
       generate_home_views
+      generate_shared_partials
       puts "  ✓ Views generated"
     end
 
@@ -992,8 +998,9 @@ module RailsBddGenerator
 
                   <div class="row">
                     <div class="col-md-6">
-                      <h3>Features</h3>
+                      <h3>Domain Features</h3>
                       <ul>
+                        #{@entities.map { |entity| "<li><a href=\"/#{entity[:name].pluralize.downcase}\" class=\"text-decoration-none\">#{entity[:name].pluralize.humanize}</a></li>" }.join("\n                        ")}
                         <li>User Management</li>
                         <li>API Layer with authentication</li>
                         <li>Comprehensive test suite (RSpec + Cucumber)</li>
@@ -1027,6 +1034,31 @@ module RailsBddGenerator
       ERB
 
       File.write(home_views_dir.join('index.html.erb'), home_index_content)
+    end
+
+    def generate_shared_partials
+      # Create shared views directory
+      shared_views_dir = @output_path.join('app/views/shared')
+      FileUtils.mkdir_p(shared_views_dir)
+
+      # Generate search partial
+      search_partial_content = <<~ERB
+        <div class="search-container">
+          <%= form_with url: request.path, method: :get, local: true, class: "search-form" do |form| %>
+            <div class="input-group">
+              <%= form.text_field :search,
+                  value: params[:search],
+                  placeholder: "Search...",
+                  class: "form-control" %>
+              <div class="input-group-append">
+                <%= form.submit "Search", class: "btn btn-outline-secondary" %>
+              </div>
+            </div>
+          <% end %>
+        </div>
+      ERB
+
+      File.write(shared_views_dir.join('_search.html.erb'), search_partial_content)
     end
 
     def generate_views_for_entity(entity)
@@ -1242,11 +1274,11 @@ module RailsBddGenerator
 
           root 'home#index'
 
-          #{@entities.reject { |e| e[:name] == 'user' }.map { |e| "resources :#{e[:name].pluralize}" }.join("\n  ")}
+          #{@entities.reject { |e| e[:name] == 'user' }.map { |e| "resources :#{e[:name].pluralize.downcase}" }.join("\n  ")}
 
           namespace :api do
             namespace :v1 do
-              #{@entities.map { |e| "resources :#{e[:name].pluralize}" }.join("\n      ")}
+              #{@entities.map { |e| "resources :#{e[:name].pluralize.downcase}" }.join("\n      ")}
             end
           end
         end
@@ -1270,7 +1302,7 @@ module RailsBddGenerator
 
     def generate_migration(entity, timestamp)
       migration_content = <<~RUBY
-        class Create#{entity[:name].pluralize.classify} < ActiveRecord::Migration[7.1]
+        class Create#{entity[:name].pluralize.camelize} < ActiveRecord::Migration[7.1]
           def change
             create_table :#{entity[:name].pluralize} do |t|
               #{generate_migration_columns(entity)}
