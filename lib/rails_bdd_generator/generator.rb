@@ -42,6 +42,7 @@ module RailsBddGenerator
       generate_rails_app
       setup_testing
       generate_models
+      generate_helpers
       generate_controllers
       generate_views
       generate_routes
@@ -831,6 +832,53 @@ module RailsBddGenerator
       puts "  ✓ Generated #{@entities.count} models"
     end
 
+    def generate_helpers
+      puts "\n→ Generating helpers..."
+
+      # Generate ApplicationHelper with utility methods and icons
+      helper_content = <<~RUBY
+        module ApplicationHelper
+          def format_currency(amount)
+            return "N/A" unless amount
+            "$" + sprintf('%.2f', amount)
+          end
+
+          def format_date(date)
+            return "N/A" unless date
+            date.strftime("%B %d, %Y")
+          end
+
+          def truncate_with_tooltip(text, length: 50)
+            return "N/A" unless text
+            if text.length > length
+              content_tag :span, truncate(text, length: length), title: text
+            else
+              text
+            end
+          end
+
+          def plus_icon
+            content_tag :span, "+", style: "display: inline-block; width: 16px; height: 16px; text-align: center; font-weight: bold;"
+          end
+
+          def edit_icon
+            content_tag :span, "✎", style: "display: inline-block; width: 16px; height: 16px; text-align: center;"
+          end
+
+          def delete_icon
+            content_tag :span, "×", style: "display: inline-block; width: 16px; height: 16px; text-align: center; font-weight: bold;"
+          end
+
+          def view_icon
+            content_tag :span, "👁", style: "display: inline-block; width: 16px; height: 16px; text-align: center;"
+          end
+        end
+      RUBY
+
+      File.write(@output_path.join('app/helpers/application_helper.rb'), helper_content)
+      puts "  ✓ Generated ApplicationHelper with icon methods"
+    end
+
     def generate_model(entity)
       model_content = <<~RUBY
         class #{entity[:name].classify} < ApplicationRecord
@@ -849,13 +897,35 @@ module RailsBddGenerator
 
     def generate_associations(entity)
       associations = []
+      through_associations = {}
 
       @relationships.each do |rel|
         if rel[:from] == entity[:name] || rel['from'] == entity[:name]
           type = rel[:type] || rel['type']
           to = rel[:to] || rel['to']
-          associations << "#{type} :#{to.pluralize}"
+          through = rel[:through] || rel['through']
+
+          case type
+          when 'belongs_to'
+            # Use singular form for belongs_to relationships
+            associations << "belongs_to :#{to.singularize}"
+          when 'has_many'
+            if through
+              # Store through relationships for processing after regular has_many
+              through_associations[to] = through
+              associations << "has_many :#{through.pluralize}, dependent: :destroy"
+            else
+              associations << "has_many :#{to.pluralize}"
+            end
+          when 'has_one'
+            associations << "has_one :#{to.singularize}"
+          end
         end
+      end
+
+      # Add through associations after their join tables
+      through_associations.each do |to, through|
+        associations << "has_many :#{to.pluralize}, through: :#{through.pluralize}"
       end
 
       associations.join("\n  ")
@@ -1135,8 +1205,6 @@ module RailsBddGenerator
                       </tbody>
                     </table>
                   </div>
-
-                  <%= paginate @#{entity[:name].pluralize} %>
                 </div>
               </div>
             </div>

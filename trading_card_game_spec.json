@@ -1,0 +1,381 @@
+{
+  "name": "TradingCardGame",
+  "description": "A comprehensive trading card game management system with cards, decks, players, and multiplayer games. Players collect cards, build decks, and compete in strategic card battles.",
+  "entities": [
+    {
+      "name": "card",
+      "attributes": {
+        "name": "string",
+        "description": "text",
+        "rarity": "string",
+        "mana_cost": "integer",
+        "attack": "integer",
+        "defense": "integer",
+        "card_type": "string",
+        "set_name": "string",
+        "flavor_text": "text",
+        "image_url": "string",
+        "active": "boolean"
+      }
+    },
+    {
+      "name": "player",
+      "attributes": {
+        "username": "string",
+        "email": "string",
+        "level": "integer",
+        "coins": "integer",
+        "experience_points": "integer",
+        "wins": "integer",
+        "losses": "integer",
+        "active": "boolean"
+      }
+    },
+    {
+      "name": "deck",
+      "attributes": {
+        "name": "string",
+        "description": "text",
+        "player_id": "integer",
+        "format": "string",
+        "is_public": "boolean",
+        "total_cards": "integer",
+        "active": "boolean"
+      }
+    },
+    {
+      "name": "deck_card",
+      "attributes": {
+        "deck_id": "integer",
+        "card_id": "integer",
+        "quantity": "integer",
+        "is_sideboard": "boolean"
+      }
+    },
+    {
+      "name": "game",
+      "attributes": {
+        "name": "string",
+        "status": "string",
+        "format": "string",
+        "max_players": "integer",
+        "current_turn": "integer",
+        "winner_id": "integer",
+        "started_at": "datetime",
+        "finished_at": "datetime",
+        "notes": "text"
+      }
+    },
+    {
+      "name": "game_player",
+      "attributes": {
+        "game_id": "integer",
+        "player_id": "integer",
+        "deck_id": "integer",
+        "final_score": "integer",
+        "position": "integer",
+        "joined_at": "datetime",
+        "left_at": "datetime"
+      }
+    },
+    {
+      "name": "collection",
+      "attributes": {
+        "player_id": "integer",
+        "card_id": "integer",
+        "quantity": "integer",
+        "acquired_at": "datetime",
+        "condition": "string"
+      }
+    },
+    {
+      "name": "trade",
+      "attributes": {
+        "from_player_id": "integer",
+        "to_player_id": "integer",
+        "status": "string",
+        "message": "text",
+        "proposed_at": "datetime",
+        "completed_at": "datetime"
+      }
+    },
+    {
+      "name": "trade_item",
+      "attributes": {
+        "trade_id": "integer",
+        "card_id": "integer",
+        "quantity": "integer",
+        "from_player": "boolean"
+      }
+    }
+  ],
+  "relationships": [
+    { "from": "player", "to": "deck", "type": "has_many" },
+    { "from": "player", "to": "collection", "type": "has_many" },
+    { "from": "player", "to": "game_player", "type": "has_many" },
+    { "from": "player", "to": "game", "type": "has_many", "through": "game_players" },
+    { "from": "player", "to": "trade", "type": "has_many", "foreign_key": "from_player_id" },
+    { "from": "player", "to": "trade", "type": "has_many", "foreign_key": "to_player_id" },
+
+    { "from": "deck", "to": "player", "type": "belongs_to" },
+    { "from": "deck", "to": "deck_card", "type": "has_many" },
+    { "from": "deck", "to": "card", "type": "has_many", "through": "deck_cards" },
+    { "from": "deck", "to": "game_player", "type": "has_many" },
+
+    { "from": "card", "to": "deck_card", "type": "has_many" },
+    { "from": "card", "to": "deck", "type": "has_many", "through": "deck_cards" },
+    { "from": "card", "to": "collection", "type": "has_many" },
+    { "from": "card", "to": "trade_item", "type": "has_many" },
+
+    { "from": "deck_card", "to": "deck", "type": "belongs_to" },
+    { "from": "deck_card", "to": "card", "type": "belongs_to" },
+
+    { "from": "game", "to": "game_player", "type": "has_many" },
+    { "from": "game", "to": "player", "type": "has_many", "through": "game_players" },
+    { "from": "game", "to": "player", "type": "belongs_to", "foreign_key": "winner_id" },
+
+    { "from": "game_player", "to": "game", "type": "belongs_to" },
+    { "from": "game_player", "to": "player", "type": "belongs_to" },
+    { "from": "game_player", "to": "deck", "type": "belongs_to" },
+
+    { "from": "collection", "to": "player", "type": "belongs_to" },
+    { "from": "collection", "to": "card", "type": "belongs_to" },
+
+    { "from": "trade", "to": "player", "type": "belongs_to", "foreign_key": "from_player_id" },
+    { "from": "trade", "to": "player", "type": "belongs_to", "foreign_key": "to_player_id" },
+    { "from": "trade", "to": "trade_item", "type": "has_many" },
+
+    { "from": "trade_item", "to": "trade", "type": "belongs_to" },
+    { "from": "trade_item", "to": "card", "type": "belongs_to" }
+  ],
+  "business_rules": [
+    {
+      "entity": "card",
+      "description": "Rarity validation",
+      "rule": "Rarity must be one of: common, uncommon, rare, epic, legendary"
+    },
+    {
+      "entity": "card",
+      "description": "Mana cost validation",
+      "rule": "Mana cost must be between 0 and 20"
+    },
+    {
+      "entity": "card",
+      "description": "Attack and defense validation",
+      "rule": "Attack and defense must be between 0 and 99"
+    },
+    {
+      "entity": "deck",
+      "description": "Deck size validation",
+      "rule": "A deck must contain between 30 and 60 cards (excluding sideboard)"
+    },
+    {
+      "entity": "deck",
+      "description": "Card quantity validation",
+      "rule": "Maximum 4 copies of any single card in a deck (except basic cards)"
+    },
+    {
+      "entity": "deck_card",
+      "description": "Quantity validation",
+      "rule": "Quantity must be between 1 and 4"
+    },
+    {
+      "entity": "player",
+      "description": "Username uniqueness",
+      "rule": "Username must be unique across all players"
+    },
+    {
+      "entity": "player",
+      "description": "Level validation",
+      "rule": "Level must be between 1 and 100"
+    },
+    {
+      "entity": "player",
+      "description": "Coins validation",
+      "rule": "Coins cannot be negative"
+    },
+    {
+      "entity": "game",
+      "description": "Status validation",
+      "rule": "Status must be: waiting, in_progress, completed, cancelled"
+    },
+    {
+      "entity": "game",
+      "description": "Player count validation",
+      "rule": "Game must have at least 2 players and no more than max_players"
+    },
+    {
+      "entity": "game",
+      "description": "Deck requirement",
+      "rule": "All players must have a valid deck to join a game"
+    },
+    {
+      "entity": "collection",
+      "description": "Quantity validation",
+      "rule": "Quantity must be positive"
+    },
+    {
+      "entity": "collection",
+      "description": "Condition validation",
+      "rule": "Condition must be: mint, near_mint, lightly_played, moderately_played, heavily_played, damaged"
+    },
+    {
+      "entity": "trade",
+      "description": "Status validation",
+      "rule": "Status must be: proposed, accepted, rejected, completed, cancelled"
+    },
+    {
+      "entity": "trade",
+      "description": "Player validation",
+      "rule": "Cannot trade with yourself"
+    }
+  ],
+  "seed_data": [
+    {
+      "entity": "card",
+      "data": [
+        {
+          "name": "Lightning Bolt",
+          "description": "Deal 3 damage to any target",
+          "rarity": "common",
+          "mana_cost": 1,
+          "attack": 0,
+          "defense": 0,
+          "card_type": "spell",
+          "set_name": "Core Set",
+          "flavor_text": "Fast as lightning, twice as deadly",
+          "active": true
+        },
+        {
+          "name": "Fire Dragon",
+          "description": "Flying creature with devastating attacks",
+          "rarity": "rare",
+          "mana_cost": 6,
+          "attack": 7,
+          "defense": 5,
+          "card_type": "creature",
+          "set_name": "Core Set",
+          "flavor_text": "Where it soars, flames follow",
+          "active": true
+        },
+        {
+          "name": "Healing Potion",
+          "description": "Restore 5 health to target",
+          "rarity": "common",
+          "mana_cost": 2,
+          "attack": 0,
+          "defense": 0,
+          "card_type": "spell",
+          "set_name": "Core Set",
+          "flavor_text": "Life flows where death once lingered",
+          "active": true
+        },
+        {
+          "name": "Shadow Assassin",
+          "description": "Stealth creature that strikes from darkness",
+          "rarity": "uncommon",
+          "mana_cost": 3,
+          "attack": 4,
+          "defense": 2,
+          "card_type": "creature",
+          "set_name": "Core Set",
+          "flavor_text": "You never see the blade that finds you",
+          "active": true
+        },
+        {
+          "name": "Ancient Guardian",
+          "description": "Powerful defender with high health",
+          "rarity": "epic",
+          "mana_cost": 8,
+          "attack": 5,
+          "defense": 12,
+          "card_type": "creature",
+          "set_name": "Core Set",
+          "flavor_text": "It has stood watch for a thousand years",
+          "active": true
+        }
+      ]
+    },
+    {
+      "entity": "player",
+      "data": [
+        {
+          "username": "CardMaster",
+          "email": "cardmaster@example.com",
+          "level": 15,
+          "coins": 1250,
+          "experience_points": 2500,
+          "wins": 45,
+          "losses": 23,
+          "active": true
+        },
+        {
+          "username": "DragonSlayer",
+          "email": "dragonslayer@example.com",
+          "level": 8,
+          "coins": 800,
+          "experience_points": 950,
+          "wins": 18,
+          "losses": 12,
+          "active": true
+        },
+        {
+          "username": "ShadowWeaver",
+          "email": "shadowweaver@example.com",
+          "level": 22,
+          "coins": 2100,
+          "experience_points": 4800,
+          "wins": 78,
+          "losses": 34,
+          "active": true
+        }
+      ]
+    }
+  ],
+  "ui_requirements": [
+    {
+      "page": "deck_show",
+      "description": "Deck detail page must show all cards in the deck with quantities",
+      "requirements": [
+        "Display deck name, description, and total card count",
+        "Show table of all cards with name, quantity, mana cost, type",
+        "Include 'Add Card' and 'Remove Card' functionality",
+        "Show deck format and whether it's tournament legal",
+        "Display sideboard cards separately if applicable"
+      ]
+    },
+    {
+      "page": "card_index",
+      "description": "Card collection page with filtering and search",
+      "requirements": [
+        "Search cards by name, type, or set",
+        "Filter by rarity, mana cost range, card type",
+        "Display card images if available",
+        "Show owned quantity for each card",
+        "Sort by name, mana cost, or rarity"
+      ]
+    },
+    {
+      "page": "player_show",
+      "description": "Player profile with decks and statistics",
+      "requirements": [
+        "Display player stats: level, wins, losses, coins",
+        "List all owned decks with card counts",
+        "Show collection overview with rare cards highlighted",
+        "Display recent game history",
+        "Link to trading interface"
+      ]
+    },
+    {
+      "page": "game_show",
+      "description": "Game lobby and match details",
+      "requirements": [
+        "Show game status and participating players",
+        "Display each player's chosen deck",
+        "Show game format and rules",
+        "Include join/leave game functionality",
+        "Display match results and scores when finished"
+      ]
+    }
+  ]
+}

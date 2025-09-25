@@ -1,0 +1,68 @@
+{
+  "name": "SimpleCardGame",
+  "description": "A simple trading card game with basic relationships",
+  "entities": [
+    {
+      "name": "card",
+      "attributes": {
+        "name": "string",
+        "description": "text",
+        "rarity": "string",
+        "mana_cost": "integer",
+        "attack": "integer",
+        "defense": "integer",
+        "active": "boolean"
+      }
+    },
+    {
+      "name": "player",
+      "attributes": {
+        "username": "string",
+        "email": "string",
+        "level": "integer",
+        "coins": "integer",
+        "active": "boolean"
+      }
+    },
+    {
+      "name": "deck",
+      "attributes": {
+        "name": "string",
+        "description": "text",
+        "player_id": "integer",
+        "total_cards": "integer",
+        "active": "boolean"
+      }
+    },
+    {
+      "name": "deck_card",
+      "attributes": {
+        "deck_id": "integer",
+        "card_id": "integer",
+        "quantity": "integer"
+      }
+    }
+  ],
+  "relationships": [
+    { "from": "player", "to": "deck", "type": "has_many" },
+    { "from": "deck", "to": "player", "type": "belongs_to" },
+    { "from": "deck", "to": "deck_card", "type": "has_many" },
+    { "from": "deck", "to": "card", "type": "has_many", "through": "deck_cards" },
+    { "from": "card", "to": "deck_card", "type": "has_many" },
+    { "from": "card", "to": "deck", "type": "has_many", "through": "deck_cards" },
+    { "from": "deck_card", "to": "deck", "type": "belongs_to" },
+    { "from": "deck_card", "to": "card", "type": "belongs_to" }
+  ],
+  "business_rules": [
+    {
+      "entity": "deck",
+      "description": "Deck size validation",
+      "rule": "A deck must contain between 30 and 60 cards"
+    },
+    {
+      "entity": "deck_card",
+      "description": "Quantity validation",
+      "rule": "Quantity must be between 1 and 4"
+    }
+  ]
+}
