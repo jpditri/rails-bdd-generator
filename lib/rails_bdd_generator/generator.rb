@@ -54,6 +54,7 @@ module RailsBddGenerator
       enhance_ux
       install_quality_tools
       finalize_application
+      validate_generation
 
       puts "\n✓ Rails application generated successfully!"
       puts "📁 Location: #{@output_path}"
@@ -188,6 +189,10 @@ module RailsBddGenerator
       {
         name: :string,
         description: :text,
+        rarity: :string,
+        mana_cost: :integer,
+        attack: :integer,
+        defense: :integer,
         price: :decimal,
         status: :string,
         active: :boolean
@@ -259,6 +264,9 @@ module RailsBddGenerator
         gem 'importmap-rails'
         gem 'stimulus-rails'
         gem 'turbo-rails'
+
+        # Pagination
+        gem 'kaminari'
 
         group :development, :test do
           gem 'rspec-rails', '~> 6.0'
@@ -872,11 +880,44 @@ module RailsBddGenerator
           def view_icon
             content_tag :span, "👁", style: "display: inline-block; width: 16px; height: 16px; text-align: center;"
           end
+
+          def list_icon
+            content_tag :span, "≡", style: "display: inline-block; width: 16px; height: 16px; text-align: center; font-weight: bold;"
+          end
+
+          # Filter helper methods
+          def filter_options_for(entity_class, attribute)
+            case attribute.to_s
+            when 'rarity'
+              [['Common', 'common'], ['Uncommon', 'uncommon'], ['Rare', 'rare'], ['Epic', 'epic'], ['Legendary', 'legendary']]
+            when 'status'
+              [['Active', 'active'], ['Inactive', 'inactive'], ['Pending', 'pending'], ['Archived', 'archived']]
+            when 'role'
+              [['Admin', 'admin'], ['User', 'user'], ['Moderator', 'moderator']]
+            when 'category', 'type'
+              # Get unique values from the database
+              entity_class.distinct.pluck(attribute).compact.map { |val| [val.humanize, val] }
+            else
+              []
+            end
+          end
+
+          def boolean_options
+            [['Yes', true], ['No', false]]
+          end
+
+          def clear_filters_link
+            link_to 'Clear All Filters', request.path, class: 'btn btn-outline-secondary btn-sm'
+          end
+
+          def filter_active?
+            params.except(:controller, :action, :page).any? { |_, v| v.present? }
+          end
         end
       RUBY
 
       File.write(@output_path.join('app/helpers/application_helper.rb'), helper_content)
-      puts "  ✓ Generated ApplicationHelper with icon methods"
+      puts "  ✓ Generated ApplicationHelper with icon and filter methods"
     end
 
     def generate_model(entity)
@@ -947,17 +988,78 @@ module RailsBddGenerator
     end
 
     def generate_scopes(entity)
-      <<~RUBY.strip
-        scope :active, -> { where(active: true) }
-        scope :recent, -> { order(created_at: :desc) }
-      RUBY
+      scopes = []
+
+      # Basic scopes
+      scopes << "scope :active, -> { where(active: true) }"
+      scopes << "scope :recent, -> { order(created_at: :desc) }"
+
+      # Add filtering scopes based on entity attributes
+      scopes.concat(generate_filtering_scopes(entity))
+
+      scopes.join("\n  ")
+    end
+
+    def generate_filtering_scopes(entity)
+      scopes = []
+
+      entity[:attributes].each do |attr, type|
+        attr_name = attr.to_s
+
+        case type.to_s
+        when /string/
+          # Text search scopes for string fields
+          if %w[name title username email].include?(attr_name)
+            scopes << "scope :search_#{attr_name}, ->(query) { where(\"#{attr_name} LIKE ?\", \"%\#{query}%\") if query.present? }"
+          end
+
+          # Select filter scopes for enum-like string fields
+          if %w[rarity status role category type].include?(attr_name)
+            scopes << "scope :filter_#{attr_name}, ->(value) { where(#{attr_name}: value) if value.present? }"
+          end
+
+        when /text/
+          # Text search for description fields
+          if %w[description content body].include?(attr_name)
+            scopes << "scope :search_#{attr_name}, ->(query) { where(\"#{attr_name} LIKE ?\", \"%\#{query}%\") if query.present? }"
+          end
+
+        when /integer|decimal/
+          # Range filters for numeric fields
+          scopes << "scope :#{attr_name}_min, ->(value) { where(\"#{attr_name} >= ?\", value) if value.present? }"
+          scopes << "scope :#{attr_name}_max, ->(value) { where(\"#{attr_name} <= ?\", value) if value.present? }"
+          scopes << "scope :#{attr_name}_range, ->(min, max) { where(#{attr_name}: min..max) if min.present? && max.present? }"
+
+        when /boolean/
+          # Boolean filters
+          scopes << "scope :#{attr_name}_filter, ->(value) { where(#{attr_name}: value) unless value.nil? }"
+
+        when /date/
+          # Date range filters
+          scopes << "scope :#{attr_name}_from, ->(date) { where(\"#{attr_name} >= ?\", date) if date.present? }"
+          scopes << "scope :#{attr_name}_to, ->(date) { where(\"#{attr_name} <= ?\", date) if date.present? }"
+        end
+      end
+
+      # Add a comprehensive search scope that searches across all searchable text fields
+      searchable_fields = entity[:attributes].select do |attr, type|
+        attr_name = attr.to_s
+        (type.to_s.include?('string') && %w[name title username email].include?(attr_name)) ||
+        (type.to_s.include?('text') && %w[description content body].include?(attr_name))
+      end.keys
+
+      if searchable_fields.any?
+        search_conditions = searchable_fields.map { |field| "#{field} LIKE :query" }.join(' OR ')
+        scopes << "scope :search_all, ->(query) { where(\"#{search_conditions}\", query: \"%\#{query}%\") if query.present? }"
+      end
+
+      scopes
     end
 
     def generate_controllers
       puts "\n→ Generating controllers..."
 
       @entities.each do |entity|
-        next if entity[:name] == 'user'
         generate_controller(entity)
       end
 
@@ -984,7 +1086,9 @@ module RailsBddGenerator
           before_action :set_#{entity[:name]}, only: %i[show edit update destroy]
 
           def index
-            @#{entity[:name].pluralize} = #{entity[:name].classify}.all
+            @#{entity[:name].pluralize} = apply_filters(#{entity[:name].classify}.all)
+                                        .page(params[:page])
+                                        .per(25)
           end
 
           def show
@@ -1026,6 +1130,8 @@ module RailsBddGenerator
           def #{entity[:name]}_params
             params.require(:#{entity[:name]}).permit(#{permitted_params(entity)})
           end
+
+          #{generate_filter_methods(entity)}
         end
       RUBY
 
@@ -1036,11 +1142,84 @@ module RailsBddGenerator
       entity[:attributes].keys.map { |attr| ":#{attr}" }.join(', ')
     end
 
+    def generate_filter_methods(entity)
+      <<~RUBY
+        def apply_filters(scope)
+          # Apply search filter if present
+          if params[:search].present?
+            scope = scope.search_all(params[:search])
+          end
+
+          # Apply specific attribute filters
+          #{generate_filter_applications(entity)}
+
+          scope
+        end
+
+        def filter_params
+          params.permit(:search, #{filter_param_keys(entity)})
+        end
+      RUBY
+    end
+
+    def generate_filter_applications(entity)
+      applications = []
+
+      entity[:attributes].each do |attr, type|
+        attr_name = attr.to_s
+
+        case type.to_s
+        when /string/
+          if %w[rarity status role category type].include?(attr_name)
+            applications << "scope = scope.filter_#{attr_name}(params[:#{attr_name}]) if params[:#{attr_name}].present?"
+          end
+
+        when /integer|decimal/
+          applications << "scope = scope.#{attr_name}_min(params[:#{attr_name}_min]) if params[:#{attr_name}_min].present?"
+          applications << "scope = scope.#{attr_name}_max(params[:#{attr_name}_max]) if params[:#{attr_name}_max].present?"
+
+        when /boolean/
+          applications << "scope = scope.#{attr_name}_filter(params[:#{attr_name}]) unless params[:#{attr_name}].nil?"
+
+        when /date/
+          applications << "scope = scope.#{attr_name}_from(params[:#{attr_name}_from]) if params[:#{attr_name}_from].present?"
+          applications << "scope = scope.#{attr_name}_to(params[:#{attr_name}_to]) if params[:#{attr_name}_to].present?"
+        end
+      end
+
+      applications.join("\n          ")
+    end
+
+    def filter_param_keys(entity)
+      params = []
+
+      entity[:attributes].each do |attr, type|
+        attr_name = attr.to_s
+
+        case type.to_s
+        when /string/
+          if %w[rarity status role category type].include?(attr_name)
+            params << ":#{attr_name}"
+          end
+
+        when /integer|decimal/
+          params << ":#{attr_name}_min, :#{attr_name}_max"
+
+        when /boolean/
+          params << ":#{attr_name}"
+
+        when /date/
+          params << ":#{attr_name}_from, :#{attr_name}_to"
+        end
+      end
+
+      params.join(', ')
+    end
+
     def generate_views
       puts "\n→ Generating views..."
 
       @entities.each do |entity|
-        next if entity[:name] == 'user'
         generate_views_for_entity(entity)
       end
 
@@ -1111,24 +1290,178 @@ module RailsBddGenerator
       shared_views_dir = @output_path.join('app/views/shared')
       FileUtils.mkdir_p(shared_views_dir)
 
-      # Generate search partial
-      search_partial_content = <<~ERB
-        <div class="search-container">
-          <%= form_with url: request.path, method: :get, local: true, class: "search-form" do |form| %>
-            <div class="input-group">
-              <%= form.text_field :search,
-                  value: params[:search],
-                  placeholder: "Search...",
-                  class: "form-control" %>
-              <div class="input-group-append">
-                <%= form.submit "Search", class: "btn btn-outline-secondary" %>
-              </div>
-            </div>
-          <% end %>
-        </div>
-      ERB
+      # Generate comprehensive search partial
+      search_partial_content = generate_search_partial_content
 
       File.write(shared_views_dir.join('_search.html.erb'), search_partial_content)
+
+      # Generate entity-specific filter forms for each entity
+      @entities.each do |entity|
+        filter_form_content = generate_entity_filter_form(entity)
+        File.write(shared_views_dir.join("_#{entity[:name].pluralize}_filters.html.erb"), filter_form_content)
+      end
+    end
+
+    def generate_search_partial_content
+      <<~ERB
+        <div class="search-and-filters">
+          <!-- Quick Search -->
+          <div class="search-container mb-3">
+            <%= form_with url: request.path, method: :get, local: true, class: "d-flex" do |form| %>
+              <div class="flex-grow-1 me-2">
+                <%= form.text_field :search,
+                    value: params[:search],
+                    placeholder: "Search across all fields...",
+                    class: "form-control" %>
+              </div>
+              <div>
+                <%= form.submit "Search", class: "btn btn-primary me-2" %>
+                <%= link_to "Advanced", "#",
+                    class: "btn btn-outline-secondary",
+                    onclick: "document.getElementById('advanced-filters').style.display = document.getElementById('advanced-filters').style.display === 'none' ? 'block' : 'none'; return false;" %>
+              </div>
+              <% if filter_active? %>
+                <div class="ms-2">
+                  <%= clear_filters_link %>
+                </div>
+              <% end %>
+            <% end %>
+          </div>
+
+          <!-- Advanced Filters (Initially Hidden) -->
+          <div id="advanced-filters" style="<%= filter_active? ? '' : 'display: none;' %>">
+            <% entity_name = controller_name %>
+            <% if File.exist?(Rails.root.join('app', 'views', 'shared', "_\#{entity_name}_filters.html.erb")) %>
+              <%= render "shared/\#{entity_name}_filters" %>
+            <% else %>
+              <div class="alert alert-info">
+                Advanced filters not available for this section.
+              </div>
+            <% end %>
+          </div>
+        </div>
+      ERB
+    end
+
+    def generate_entity_filter_form(entity)
+      filter_fields = []
+
+      entity[:attributes].each do |attr, type|
+        attr_name = attr.to_s
+
+        case type.to_s
+        when /string/
+          if %w[rarity status role category type].include?(attr_name)
+            filter_fields << generate_select_filter_field(entity, attr_name)
+          end
+
+        when /integer|decimal/
+          filter_fields << generate_range_filter_fields(attr_name, type.to_s)
+
+        when /boolean/
+          filter_fields << generate_boolean_filter_field(attr_name)
+
+        when /date/
+          filter_fields << generate_date_range_filter_fields(attr_name)
+        end
+      end
+
+      <<~ERB
+        <div class="card">
+          <div class="card-header">
+            <h6 class="mb-0">Advanced Filters</h6>
+          </div>
+          <div class="card-body">
+            <%= form_with url: request.path, method: :get, local: true, class: "filter-form" do |form| %>
+              <!-- Preserve search parameter -->
+              <%= form.hidden_field :search, value: params[:search] if params[:search].present? %>
+
+              <div class="row">
+                #{filter_fields.join("\n                ")}
+              </div>
+
+              <div class="d-flex justify-content-between align-items-center mt-3">
+                <div>
+                  <%= form.submit "Apply Filters", class: "btn btn-primary" %>
+                  <%= clear_filters_link %>
+                </div>
+                <small class="text-muted">
+                  <% if filter_active? %>
+                    Filters are active
+                  <% else %>
+                    No filters applied
+                  <% end %>
+                </small>
+              </div>
+            <% end %>
+          </div>
+        </div>
+      ERB
+    end
+
+    def generate_select_filter_field(entity, attr_name)
+      <<~ERB.strip
+        <div class="col-md-3 mb-3">
+                  <%= form.label :#{attr_name}, class: "form-label" %>
+                  <%= form.select :#{attr_name},
+                      options_for_select([['All', '']] + filter_options_for(#{entity[:name].classify}, :#{attr_name}), params[:#{attr_name}]),
+                      { include_blank: false },
+                      { class: "form-select" } %>
+                </div>
+      ERB
+    end
+
+    def generate_range_filter_fields(attr_name, type)
+      placeholder_max = attr_name.include?('cost') ? '10' : '100'
+      <<~ERB.strip
+        <div class="col-md-3 mb-3">
+                  <%= form.label :#{attr_name}_min, "Min #{attr_name.humanize}", class: "form-label" %>
+                  <%= form.number_field :#{attr_name}_min,
+                      value: params[:#{attr_name}_min],
+                      class: "form-control",
+                      placeholder: "0" %>
+                </div>
+                <div class="col-md-3 mb-3">
+                  <%= form.label :#{attr_name}_max, "Max #{attr_name.humanize}", class: "form-label" %>
+                  <%= form.number_field :#{attr_name}_max,
+                      value: params[:#{attr_name}_max],
+                      class: "form-control",
+                      placeholder: "#{placeholder_max}" %>
+                </div>
+      ERB
+    end
+
+    def generate_boolean_filter_field(attr_name)
+      label = attr_name == 'active' ? 'Status' : attr_name.humanize
+      true_label = attr_name == 'active' ? 'Active' : 'Yes'
+      false_label = attr_name == 'active' ? 'Inactive' : 'No'
+
+      <<~ERB.strip
+        <div class="col-md-3 mb-3">
+                  <%= form.label :#{attr_name}, "#{label}", class: "form-label" %>
+                  <%= form.select :#{attr_name},
+                      options_for_select([['All', ''], ['#{true_label}', 'true'], ['#{false_label}', 'false']], params[:#{attr_name}]),
+                      { include_blank: false },
+                      { class: "form-select" } %>
+                </div>
+      ERB
+    end
+
+    def generate_date_range_filter_fields(attr_name)
+      <<~ERB.strip
+        <div class="col-md-3 mb-3">
+                  <%= form.label :#{attr_name}_from, "#{attr_name.humanize} From", class: "form-label" %>
+                  <%= form.date_field :#{attr_name}_from,
+                      value: params[:#{attr_name}_from],
+                      class: "form-control" %>
+                </div>
+                <div class="col-md-3 mb-3">
+                  <%= form.label :#{attr_name}_to, "#{attr_name.humanize} To", class: "form-label" %>
+                  <%= form.date_field :#{attr_name}_to,
+                      value: params[:#{attr_name}_to],
+                      class: "form-control" %>
+                </div>
+      ERB
     end
 
     def generate_views_for_entity(entity)
@@ -1205,6 +1538,7 @@ module RailsBddGenerator
                       </tbody>
                     </table>
                   </div>
+                  <%= paginate @#{entity[:name].pluralize} %>
                 </div>
               </div>
             </div>
@@ -1342,7 +1676,7 @@ module RailsBddGenerator
 
           root 'home#index'
 
-          #{@entities.reject { |e| e[:name] == 'user' }.map { |e| "resources :#{e[:name].pluralize.downcase}" }.join("\n  ")}
+          #{@entities.map { |e| "resources :#{e[:name].pluralize.downcase}" }.join("\n  ")}
 
           namespace :api do
             namespace :v1 do
@@ -1957,15 +2291,6 @@ module RailsBddGenerator
       puts "  ✓ Responsive layouts created"
     end
 
-    def finalize_application
-      puts "\n→ Finalizing application..."
-
-      generate_readme
-      generate_database_config
-      generate_seeds
-
-      puts "  ✓ Application finalized"
-    end
 
     def generate_readme
       readme = <<~MD
@@ -2429,6 +2754,45 @@ module RailsBddGenerator
           end
         RUBY
       end.join
+    end
+
+    def validate_generation
+      puts "\n→ Validating generated files..."
+      missing_files = []
+
+      @entities.each do |entity|
+        entity_name = entity[:name]
+
+        # Check controller file
+        controller_file = @output_path.join("app/controllers/#{entity_name.pluralize}_controller.rb")
+        missing_files << "Controller: #{controller_file}" unless File.exist?(controller_file)
+
+        # Check model file
+        model_file = @output_path.join("app/models/#{entity_name}.rb")
+        missing_files << "Model: #{model_file}" unless File.exist?(model_file)
+
+        # Check view files
+        views_dir = @output_path.join("app/views/#{entity_name.pluralize}")
+        %w[index.html.erb show.html.erb new.html.erb edit.html.erb _form.html.erb].each do |view_file|
+          view_path = views_dir.join(view_file)
+          missing_files << "View: #{view_path}" unless File.exist?(view_path)
+        end
+
+        # Check filter partial
+        filter_partial = @output_path.join("app/views/shared/_#{entity_name.pluralize}_filters.html.erb")
+        missing_files << "Filter partial: #{filter_partial}" unless File.exist?(filter_partial)
+      end
+
+      if missing_files.empty?
+        puts "  ✓ All expected files generated successfully!"
+      else
+        puts "  ! Missing files detected:"
+        missing_files.each { |file| puts "    - #{file}" }
+      end
+
+      puts "  ✓ Generated #{@entities.count} entities with #{@entities.count * 5} view files each"
+      puts "  ✓ Generated #{@entities.count} filter partials"
+      puts "  ✓ Validation complete"
     end
   end
 end
